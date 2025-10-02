@@ -1,0 +1,6 @@
+@Fantasy_Football_Assistant_Manager_HostAddress = http://localhost:5090
+
+GET {{Fantasy_Football_Assistant_Manager_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
