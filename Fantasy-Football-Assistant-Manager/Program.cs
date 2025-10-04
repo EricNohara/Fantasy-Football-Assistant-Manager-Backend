@@ -1,9 +1,26 @@
+using Supabase;
+//using Supabase.Postgrest.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Supabase settings
+var supabaseSection = builder.Configuration.GetRequiredSection("Supabase");
+var supabaseUrl = supabaseSection["Url"];
+var supabaseServiceRoleKey = supabaseSection["ServiceRoleKey"];
+
+if (string.IsNullOrEmpty(supabaseUrl) || string.IsNullOrEmpty(supabaseServiceRoleKey))
+{
+    throw new InvalidOperationException("Supabase configuration is missing! Check appsettings.json or environment variables.");
+}
+
+// Register Supabase clients - one for anon key and one for service role key for privledged operations
+builder.Services.AddSingleton<Client>(sp =>
+{
+    var options = new SupabaseOptions { AutoConnectRealtime = true };
+    return new Client(supabaseUrl, supabaseServiceRoleKey, options);
+});
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
