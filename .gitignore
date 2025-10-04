@@ -9,7 +9,39 @@
 bin/
 obj/
 
+# Rider
+.idea/
+
 # NuGet
 *.nupkg
 *.snupkg
 packages/
+*.nuget.g.props
+*.nuget.g.targets
+
+# ASP.NET Core files
+wwwroot/lib/
+
+# Logs
+*.log
+logs/
+
+# Resharper
+_ReSharper*/
+*.DotSettings.user
+
+# Debug / publish / profile files
+*.pdb
+*.cache
+*.dbmdl
+*.jfm
+*.jfm.meta
+*.dbmdl
+*.bak
+
+# HTTP requests
+*.http
+
+# Local app settings
+appsettings.Development.json
+appsettings.json
