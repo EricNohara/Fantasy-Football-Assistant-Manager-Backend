@@ -19,4 +19,20 @@ public class User: BaseModel
     [Column("email")]
     [JsonPropertyName("email")]
     public string Email { get; set; } = string.Empty;
+
+    [Column("roster_settings_id")]
+    [JsonPropertyName("roster_settings_id")]
+    public Guid? RosterSettingsId { get; set; }
+
+    [Column("scoring_settings_id")]
+    [JsonPropertyName("scoring_settings_id")]
+    public Guid? ScoringSettingsId { get; set; }
+
+    [Column("tokens_left")]
+    [JsonPropertyName("tokens_left")]
+    public int TokensLeft { get; set; } = 0;
+
+    [Column("team_member_ids")]
+    [JsonPropertyName("team_member_ids")]
+    public List<string> TeamMemberIds { get; set; } = new List<string> ();
 }

@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Supabase;
-using Fantasy_Football_Assistant_Manager.DTOs;
+﻿using Fantasy_Football_Assistant_Manager.DTOs;
 using Fantasy_Football_Assistant_Manager.Models;
+using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.AspNetCore.Mvc;
+using Supabase;
+using Supabase.Gotrue;
 
 namespace Fantasy_Football_Assistant_Manager.Controllers;
 
@@ -9,15 +11,16 @@ namespace Fantasy_Football_Assistant_Manager.Controllers;
 [Route("api/[controller]")]
 public class UsersController: ControllerBase
 {
-    private readonly Client supabase;
+    private readonly Supabase.Client supabase;
 
-    public UsersController(Client supabase)
+    public UsersController(Supabase.Client supabase)
     {
         this.supabase = supabase;
     }
 
-    [HttpPost]
-    public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest req)
+    // SIGN UP
+    [HttpPost("signup")]
+    public async Task<IActionResult> SignUp([FromBody] CreateUserRequest req)
     {
         if (string.IsNullOrEmpty(req.Email) || string.IsNullOrEmpty(req.Password))
         {
@@ -37,16 +40,20 @@ public class UsersController: ControllerBase
             var userId = Guid.Parse(session.User.Id);
 
             // Insert the new user and their information into users table
-            var user = new User
+            var user = new Models.User
             {
                 Id = userId,
                 Email = req.Email,
                 TeamName = req.TeamName
             };
 
-            await supabase.From<User>().Insert(user);
+            await supabase.From<Models.User>().Insert(user);
 
-            return StatusCode(201);
+            return Ok(new
+            {
+                AccessToken = session.AccessToken,
+                RefreshToken = session.RefreshToken,
+            });
         }
         catch (Supabase.Postgrest.Exceptions.PostgrestException e) when (e.Message.Contains("duplicate"))
         {
