@@ -38,7 +38,8 @@ namespace Fantasy_Football_Assistant_Manager.Controllers
             var service = new PaymentIntentService();   //PaymentIntentService is a class for interfacing with the API
             var paymentIntent = await service.CreateAsync(options); //request a new payment intent from the Stripe servers
 
-            //return a success response. Do not pass the payment intent to the client, just sent the client secret
+            //return a success response. Do not pass the payment intent to the client, just sent the client secret.
+            //The client secret is a frontend-safe identifier for a transaction/payment intent.
             return Ok(new { clientSecret = paymentIntent.ClientSecret });
         }
     }
