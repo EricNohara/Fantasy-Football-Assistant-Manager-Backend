@@ -1,3 +1,4 @@
+using Fantasy_Football_Assistant_Manager.Services;
 using Supabase;
 //using Supabase.Postgrest.Models;
 
@@ -34,6 +35,9 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
     });
 });
+
+// Add http client and nflverseservice
+builder.Services.AddHttpClient<NflVerseService>();
 
 var app = builder.Build();
 
