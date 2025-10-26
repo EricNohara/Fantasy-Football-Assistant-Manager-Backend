@@ -11,14 +11,21 @@ public class NflVerseService
     // url for updated NFL player stats maintained by nflverse
     private const string PLAYER_STATS_URL = "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_reg_2025.csv";
 
+    // used for fast loopups for defensive positions (we only store offensive players)
+    private HashSet<string> DEFENSIVE_POSITIONS = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "DL", "DE", "DT", "NT", "LB", "ILB", "MLB", "OLB", "DB", "CB", "S", "FS", "SS"
+    };
+
     public NflVerseService(HttpClient httpClient)
     {
         _httpClient = httpClient;
     }
 
-    public async Task<List<PlayerStat>> GetAllPlayerStatsAsync()
+    // function to get all offensive players as Player type
+    public async Task<List<Player>> GetAllOffensivePlayersAsync()
     {
-        // fetch all player stats from nflverse CSV file
+        // fetch all player stats from nflverse CSV
         using var res = await _httpClient.GetAsync(PLAYER_STATS_URL);
         res.EnsureSuccessStatusCode();
 
@@ -28,17 +35,16 @@ public class NflVerseService
         using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
 
         // register the player stat mappings from the csv format to our column names
-        csv.Context.RegisterClassMap<PlayerStatMap>();
+        csv.Context.RegisterClassMap<PlayerMap>();
 
         // read all records from the CSV and convert it to a list of player stats
-        var records = csv.GetRecords<PlayerStat>().ToList();
+        var records = csv.GetRecords<Player>().ToList();
 
-        // generate GUIDs for each record (needed for supabase model when we want to insert into our database later on)
-        foreach(var record in records)
-        {
-            record.Id = Guid.NewGuid();
-        }
+        // Filter out defensive players
+        var offensivePlayers = records
+            .Where(p => !string.IsNullOrWhiteSpace(p.Id) && !DEFENSIVE_POSITIONS.Contains(p.Position))
+            .ToList();
 
-        return records;
+        return offensivePlayers;
     }
 }

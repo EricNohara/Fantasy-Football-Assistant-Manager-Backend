@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Fantasy_Football_Assistant_Manager.Models;
 
+[Table("players")]
 public class Player: BaseModel
 {
     [PrimaryKey("id", false)]
