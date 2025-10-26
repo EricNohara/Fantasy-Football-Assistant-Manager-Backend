@@ -8,7 +8,7 @@ namespace Fantasy_Football_Assistant_Manager.Controllers
     [Route("api/[controller]")]     //establishes this controller's base URL path
     public class StripeController : Controller  //Controller class gives access to objects/methods needed to handle HTTP
     {
-        private readonly IConfiguration _config;    //stores appsettings information, including keys
+        private readonly IConfiguration _config;    //accesses appsettings information, including keys
 
         //constructor
         public StripeController(IConfiguration config)
