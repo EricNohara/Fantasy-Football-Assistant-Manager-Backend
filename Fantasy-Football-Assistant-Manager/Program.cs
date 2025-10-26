@@ -14,7 +14,7 @@ if (string.IsNullOrEmpty(supabaseUrl) || string.IsNullOrEmpty(supabaseServiceRol
     throw new InvalidOperationException("Supabase configuration is missing! Check appsettings.json or environment variables.");
 }
 
-// Register Supabase clients - one for anon key and one for service role key for privledged operations
+// Register Supabase clients - service role key for privledged operations
 builder.Services.AddSingleton<Client>(sp =>
 {
     var options = new SupabaseOptions { AutoConnectRealtime = true };
@@ -36,7 +36,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Add http client and nflverseservice
+// Add http client to nflverseservice for requesting player stats CSV data
 builder.Services.AddHttpClient<NflVerseService>();
 
 var app = builder.Build();
