@@ -44,9 +44,9 @@ public class SupaBaseController : ControllerBase
             {
                 case "users":
                 {
-                    var res = await _supabase.From<Models.User>().Get();
-                    var models = res.Models ?? new List<Models.User>();
-                    var dtos = models.Select(m => new DTOs.User
+                    var res = await _supabase.From<Models.User>().Get(); // fetch data from supabase database 
+                    // map supabase result to dto
+                    var dtos = res.Models.Select(m => new DTOs.User
                     {
                         Id = m.Id,
                         TeamName = m.TeamName,
