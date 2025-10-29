@@ -12,7 +12,7 @@ public class WeeklyPlayerStat
     public int Week { get; set; }
 
     [JsonPropertyName("player_id")]
-    public Guid PlayerId { get; set; }
+    public String PlayerId { get; set; } = String.Empty;
 
     [JsonPropertyName("player_stats_id")]
     public Guid PlayerStatsId { get; set; }

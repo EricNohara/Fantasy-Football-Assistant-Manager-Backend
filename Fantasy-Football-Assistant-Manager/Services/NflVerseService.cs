@@ -8,8 +8,10 @@ namespace Fantasy_Football_Assistant_Manager.Services;
 public class NflVerseService
 {
     private readonly HttpClient _httpClient;
-    // url for updated NFL player stats maintained by nflverse
+
+    // nflverse urls for fetching data
     private const string SEASONAL_PLAYER_STATS_URL = "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_reg_2025.csv";
+    private const string WEEKLY_PLAYER_STATS_URL = "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2025.csv";
 
     // used for fast loopups for defensive positions (we only store offensive players)
     private HashSet<string> DEFENSIVE_POSITIONS = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -67,10 +69,36 @@ public class NflVerseService
         var records = csv.GetRecords<PlayerStatCsv>().ToList();
 
         // Filter out defensive players
-        var offensivePlayers = records
+        var offensivePlayerStats = records
             .Where(p => !string.IsNullOrWhiteSpace(p.PlayerId) && !DEFENSIVE_POSITIONS.Contains(p.Position))
             .ToList();
 
-        return offensivePlayers;
+        return offensivePlayerStats;
+    }
+
+    // function to get all offensive weekly stats with the associated player id
+    public async Task<List<PlayerStatCsv>> GetAllOffensiveWeeklyStatsAsync()
+    {
+        // fetch all player stats from nflverse CSV
+        using var res = await _httpClient.GetAsync(WEEKLY_PLAYER_STATS_URL);
+        res.EnsureSuccessStatusCode();
+
+        // read the contents of the CSV as a stream to parse the CSV
+        using var stream = await res.Content.ReadAsStreamAsync();
+        using var reader = new StreamReader(stream);
+        using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+
+        // register the player stat mappings from the csv format to our column names
+        csv.Context.RegisterClassMap<PlayerStatCsvMap>();
+
+        // read all records from the CSV and convert it to a list of player stats
+        var records = csv.GetRecords<PlayerStatCsv>().ToList();
+
+        // Filter out defensive players
+        var offensivePlayerStats = records
+            .Where(p => !string.IsNullOrWhiteSpace(p.PlayerId) && !DEFENSIVE_POSITIONS.Contains(p.Position))
+            .ToList();
+
+        return offensivePlayerStats;
     }
 }

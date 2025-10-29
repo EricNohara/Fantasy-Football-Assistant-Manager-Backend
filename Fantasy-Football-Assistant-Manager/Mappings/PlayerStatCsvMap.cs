@@ -10,6 +10,11 @@ public class PlayerStatCsvMap: ClassMap<PlayerStatCsv>
         // Basic info
         Map(m => m.PlayerId).Name("player_id");
         Map(m => m.Position).Name("position");
+
+        // optional fields
+        Map(m => m.Week).Name("week").Optional();
+        Map(m => m.SeasonStartYear).Name("season").Optional();
+
         Map(m => m.Completions).Name("completions");
         Map(m => m.PassingAttempts).Name("attempts");
         Map(m => m.PassingYards).Name("passing_yards");

@@ -5,6 +5,8 @@ public class PlayerStatCsv
 {
     public string PlayerId { get; set; } = String.Empty;
     public string Position { get; set; } = String.Empty;
+    public int Week { get; set; } = -1;
+    public int SeasonStartYear { get; set; } = -1;
     public int? Completions { get; set; }
     public int? PassingAttempts { get; set; }
     public int? PassingYards { get; set; }
