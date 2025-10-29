@@ -7,7 +7,7 @@ namespace Fantasy_Football_Assistant_Manager.Controllers;
 [Route("api/[controller]")]
 public class SupaBaseController : ControllerBase
 {
-    private readonly Supabase.Client _supabase;
+    private readonly Client _supabase;
 
     // Allowed tables that this controller may expose. Update as needed.
     private static readonly HashSet<string> AllowedTables = new(StringComparer.OrdinalIgnoreCase)
@@ -24,7 +24,7 @@ public class SupaBaseController : ControllerBase
         "team_defensive_stats"
     };
 
-    public SupaBaseController(Supabase.Client supabase)
+    public SupaBaseController(Client supabase)
     {
         _supabase = supabase;
     }

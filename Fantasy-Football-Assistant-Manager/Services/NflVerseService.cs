@@ -12,6 +12,7 @@ public class NflVerseService
     // nflverse urls for fetching data
     private const string SEASONAL_PLAYER_STATS_URL = "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_reg_2025.csv";
     private const string WEEKLY_PLAYER_STATS_URL = "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2025.csv";
+    private const string SEASON_TEAM_STATS_URL = "https://github.com/nflverse/nflverse-data/releases/download/stats_team/stats_team_regpost_2025.csv";
 
     // used for fast loopups for defensive positions (we only store offensive players)
     private HashSet<string> DEFENSIVE_POSITIONS = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -100,5 +101,25 @@ public class NflVerseService
             .ToList();
 
         return offensivePlayerStats;
+    }
+
+    public async Task<List<TeamSeasonStatCsv>> GetAllTeamSeasonStatsAsync()
+    {
+        // fetch all team season stats from nflverse CSV
+        using var res = await _httpClient.GetAsync(SEASON_TEAM_STATS_URL);
+        res.EnsureSuccessStatusCode();
+
+        // read the contents of the CSV as a stream to parse the CSV
+        using var stream = await res.Content.ReadAsStreamAsync();
+        using var reader = new StreamReader(stream);
+        using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+
+        // register the season stat mappings from the csv format to our column names
+        csv.Context.RegisterClassMap<TeamSeasonStatCsvMap>();
+
+        // read all records from the CSV and convert it to a list of team season stats
+        var records = csv.GetRecords<TeamSeasonStatCsv>().ToList();
+
+        return records;
     }
 }
