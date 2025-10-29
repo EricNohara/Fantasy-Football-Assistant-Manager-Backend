@@ -39,6 +39,9 @@ builder.Services.AddCors(options =>
 // Add http client to nflverseservice for requesting player stats CSV data
 builder.Services.AddHttpClient<NflVerseService>();
 
+// register the ChatGPTService
+builder.Services.AddScoped<ChatGPTService>();
+
 var app = builder.Build();
 
 //enable CORS
