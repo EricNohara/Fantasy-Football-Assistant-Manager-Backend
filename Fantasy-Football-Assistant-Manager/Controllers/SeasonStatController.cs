@@ -121,4 +121,75 @@ public class SeasonStatController: ControllerBase
             return StatusCode(500, $"Error populating season stats: {ex.Message}");
         }
     }
+
+    // PUT route for updating all player stats (MAIN route to be called from scheduled Azure Functions App)
+    [HttpPut("all")]
+    public async Task<IActionResult> PutAll()
+    {
+        try
+        {
+            // fetch offensive players using service
+            var seasonStats = await _nflVerseService.GetAllOffensiveSeasonStatsAsync();
+
+            if (seasonStats == null || !seasonStats.Any())
+            {
+                return BadRequest("No season stats found to insert.");
+            }
+
+            // get pairs of player_id and their season_stats_id
+            var playerIds = seasonStats.Select(s => s.PlayerId).ToList();
+
+            var playersResponse = await _supabase
+                .From<Player>()
+                .Select(p => new object[] { p.Id, p.SeasonStatsId })
+                .Filter("id", Supabase.Postgrest.Constants.Operator.In, playerIds)
+                .Get();
+
+            var playerStatMap = playersResponse.Models
+                .Where(p => p.SeasonStatsId != null)
+                .ToDictionary(p => p.Id, p => p.SeasonStatsId.Value);
+
+            // Build list of updates
+            var updates = seasonStats.Select(s => new
+            {
+                season_stats_id = playerStatMap[s.PlayerId],
+                completions = NullIfZero(s.Completions),
+                passing_attempts = NullIfZero(s.PassingAttempts),
+                passing_yards = NullIfZero(s.PassingYards),
+                passing_tds = NullIfZero(s.PassingTds),
+                interceptions_against = NullIfZero(s.InterceptionsAgainst),
+                sacks_against = NullIfZero(s.SacksAgainst),
+                fumbles_against = NullIfZero(s.FumblesAgainst),
+                passing_first_downs = NullIfZero(s.PassingFirstDowns),
+                passing_epa = NullIfZero(s.PassingEpa),
+                carries = NullIfZero(s.Carries),
+                rushing_yards = NullIfZero(s.RushingYards),
+                rushing_tds = NullIfZero(s.RushingTds),
+                rushing_first_downs = NullIfZero(s.RushingFirstDowns),
+                rushing_epa = NullIfZero(s.RushingEpa),
+                receptions = NullIfZero(s.Receptions),
+                targets = NullIfZero(s.Targets),
+                receiving_yards = NullIfZero(s.ReceivingYards),
+                receiving_tds = NullIfZero(s.ReceivingTds),
+                receiving_first_downs = NullIfZero(s.ReceivingFirstDowns),
+                receiving_epa = NullIfZero(s.ReceivingEpa),
+                fg_made_list = s.FgMadeList,
+                fg_missed_list = s.FgMissedList,
+                fg_blocked_list = s.FgBlockedList,
+                pat_attempts = NullIfZero(s.PadAttempts),
+                pat_percent = NullIfZero(s.PatPercent),
+                fantasy_points = s.FantasyPoints,
+                fantasy_points_ppr = s.FantasyPointsPpr
+            }).ToList();
+
+            // Call RPC to update all at once
+            await _supabase.Rpc("batch_update_player_season_stats", new { updates });
+
+            return Ok(new { message = "Season stats updated successfully!" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error updating season stats: {ex.Message}");
+        }
+    }
 }
