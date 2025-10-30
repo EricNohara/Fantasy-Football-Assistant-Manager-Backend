@@ -16,7 +16,7 @@ public class TeamSeasonStatCsvMap: ClassMap<TeamSeasonStatCsv>
         Map(m => m.SacksFor).Name("def_sacks");
         Map(m => m.SackYardsFor).Name("def_sack_yards");
         Map(m => m.InterceptionsFor).Name("def_interceptions");
-        Map(m => m.InterceptionYardsFor).Name("def_interceptions_yards");
+        Map(m => m.InterceptionYardsFor).Name("def_interception_yards");
         Map(m => m.DefTds).Name("def_tds");
         Map(m => m.Safeties).Name("def_safeties");
         Map(m => m.PassDefended).Name("def_pass_defended");

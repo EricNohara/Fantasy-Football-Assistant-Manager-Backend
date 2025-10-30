@@ -124,7 +124,7 @@ public class NflVerseService
         );
     }
 
-    public async Task<List<PlayerStatCsv>> GetAllOffensiveSeasonStatsAsync()
+    public async Task<List<PlayerStatCsv>> GetAllOffensivePlayerSeasonStatsAsync()
     {
         return await LoadCsvDataAsync<PlayerStatCsv, PlayerStatCsvMap>(
             SEASON_PLAYER_STATS_URL,
@@ -132,11 +132,19 @@ public class NflVerseService
         );
     }
 
-    public async Task<List<PlayerStatCsv>> GetAllOffensiveWeeklyStatsAsync()
+    public async Task<List<PlayerStatCsv>> GetAllOffensivePlayerWeeklyStatsAsync()
     {
         return await LoadCsvDataAsync<PlayerStatCsv, PlayerStatCsvMap>(
             WEEKLY_PLAYER_STATS_URL,
             p => !string.IsNullOrWhiteSpace(p.PlayerId) && !DEFENSIVE_POSITIONS.Contains(p.Position)
+        );
+    }
+
+    public async Task<List<PlayerInformationCsv>> GetAllPlayerInformationAsync()
+    {
+        return await LoadCsvDataAsync<PlayerInformationCsv, PlayerInformationCsvMap>(
+            PLAYER_INFORMATION_URL,
+            r => !string.IsNullOrWhiteSpace(r.Id) && r.LastSeason == CURRENT_SEASON
         );
     }
 
@@ -150,14 +158,6 @@ public class NflVerseService
         return await LoadCsvDataAsync<TeamDataCsv, TeamDataCsvMap>(
             TEAM_DATA_URL,
             r => !string.IsNullOrWhiteSpace(r.Id) && CURRENT_TEAM_IDS_IN_NFL.Contains(r.Id)
-        );
-    }
-
-    public async Task<List<PlayerInformationCsv>> GetAllPlayerInformationAsync()
-    {
-        return await LoadCsvDataAsync<PlayerInformationCsv, PlayerInformationCsvMap>(
-            PLAYER_INFORMATION_URL,
-            r => !string.IsNullOrWhiteSpace(r.Id) && r.LastSeason == CURRENT_SEASON
         );
     }
 }

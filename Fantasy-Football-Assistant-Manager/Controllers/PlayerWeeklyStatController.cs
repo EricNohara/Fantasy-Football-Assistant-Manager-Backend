@@ -7,13 +7,13 @@ namespace Fantasy_Football_Assistant_Manager.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class WeeklyStatController : ControllerBase
+public class PlayerWeeklyStatController : ControllerBase
 {
     private readonly NflVerseService _nflVerseService;
     private readonly Client _supabase;
 
     // injects NflVerseService via dependency injection
-    public WeeklyStatController(NflVerseService nflVerseService, Client supabase)
+    public PlayerWeeklyStatController(NflVerseService nflVerseService, Client supabase)
     {
         _nflVerseService = nflVerseService;
         _supabase = supabase;
@@ -30,7 +30,7 @@ public class WeeklyStatController : ControllerBase
     {
         try
         {
-            var weeklyStats = await _nflVerseService.GetAllOffensiveWeeklyStatsAsync();
+            var weeklyStats = await _nflVerseService.GetAllOffensivePlayerWeeklyStatsAsync();
 
             if (weeklyStats == null || !weeklyStats.Any())
             {

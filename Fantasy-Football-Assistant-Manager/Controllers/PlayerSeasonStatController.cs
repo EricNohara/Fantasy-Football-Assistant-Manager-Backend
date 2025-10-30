@@ -7,13 +7,13 @@ namespace Fantasy_Football_Assistant_Manager.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class SeasonStatController: ControllerBase
+public class PlayerSeasonStatController: ControllerBase
 {
     private readonly NflVerseService _nflVerseService;
     private readonly Client _supabase;
 
     // injects NflVerseService via dependency injection
-    public SeasonStatController(NflVerseService nflVerseService, Client supabase)
+    public PlayerSeasonStatController(NflVerseService nflVerseService, Client supabase)
     {
         _nflVerseService = nflVerseService;
         _supabase = supabase;
@@ -51,7 +51,7 @@ public class SeasonStatController: ControllerBase
         try
         {
             // fetch offensive players using service
-            var seasonStats = await _nflVerseService.GetAllOffensiveSeasonStatsAsync();
+            var seasonStats = await _nflVerseService.GetAllOffensivePlayerSeasonStatsAsync();
 
             if (seasonStats == null || !seasonStats.Any())
             {
@@ -129,7 +129,7 @@ public class SeasonStatController: ControllerBase
         try
         {
             // fetch offensive players using service
-            var seasonStats = await _nflVerseService.GetAllOffensiveSeasonStatsAsync();
+            var seasonStats = await _nflVerseService.GetAllOffensivePlayerSeasonStatsAsync();
 
             if (seasonStats == null || !seasonStats.Any())
             {

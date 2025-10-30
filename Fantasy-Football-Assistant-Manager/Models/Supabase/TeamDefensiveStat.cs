@@ -5,6 +5,8 @@ using System.Text.Json.Serialization;
 namespace Fantasy_Football_Assistant_Manager.Models.Supabase;
 
 // used to store a team's defensive stats
+[Table("team_defensive_stats")]
+
 public class TeamDefensiveStat: BaseModel
 {
     [PrimaryKey("id", false)]
