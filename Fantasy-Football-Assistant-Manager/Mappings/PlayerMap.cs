@@ -7,7 +7,6 @@ public class PlayerMap: ClassMap<Player>
 {
     public PlayerMap()
     {
-        // Basic info
         Map(m => m.Id).Name("player_id");
         Map(m => m.Name).Name("player_display_name");
         Map(m => m.HeadshotUrl).Name("headshot_url");

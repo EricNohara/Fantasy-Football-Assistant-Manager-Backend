@@ -24,13 +24,17 @@ public class Player: BaseModel
     [JsonPropertyName("position")]
     public string Position { get; set; } = string.Empty;
 
-    [Column("injury_status")]
-    [JsonPropertyName("injury_status")]
-    public string? InjuryStatus { get; set; }
+    [Column("status")]
+    [JsonPropertyName("status")]
+    public string? Status { get; set; }
+
+    [Column("status_description")]
+    [JsonPropertyName("status_description")]
+    public string? StatusDescription { get; set; }
 
     [Column("team_id")]
     [JsonPropertyName("team_id")]
-    public Guid? TeamId { get; set; }
+    public string? TeamId { get; set; }
 
     [Column("season_stats_id")]
     [JsonPropertyName("season_stats_id")]

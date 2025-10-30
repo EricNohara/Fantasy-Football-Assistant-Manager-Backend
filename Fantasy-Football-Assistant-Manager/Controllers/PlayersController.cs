@@ -37,7 +37,8 @@ public class PlayersController: ControllerBase
                 Name = p.Name,
                 HeadshotUrl = p.HeadshotUrl,
                 Position = p.Position,
-                InjuryStatus = p.InjuryStatus,
+                Status = p.Status,
+                StatusDescription = p.StatusDescription,
                 TeamId = p.TeamId,
                 SeasonStatsId = p.SeasonStatsId
             })
@@ -59,14 +60,45 @@ public class PlayersController: ControllerBase
         {
             // fetch offensive players using service
             var players = await _nflVerseService.GetAllOffensivePlayersAsync();
-
             if (players == null || !players.Any())
+            {
                 return BadRequest("No players found to insert.");
+            }
+
+            // fetch player information using service
+            var playerInformation = await _nflVerseService.GetAllPlayerInformationAsync();
+            if (playerInformation == null || !playerInformation.Any())
+            {
+                return BadRequest("No player information found.");
+            }
+
+            // filter out player information for players who are not in the fetched players
+            var playerLookup = players.ToDictionary(p => p.Id, StringComparer.OrdinalIgnoreCase);
+
+            // keep only information for players that exist in the players list and generate Player models from them
+            var filteredPlayerWithInfo = playerInformation
+                .Where(info => !string.IsNullOrWhiteSpace(info.Id) && playerLookup.ContainsKey(info.Id))
+                .Select(info =>
+                {
+                    var player = playerLookup[info.Id]; // get the matching player
+                    return new Player
+                    {
+                        Id = info.Id,
+                        Name = player.Name,
+                        HeadshotUrl = player.HeadshotUrl,
+                        Position = player.Position,
+                        Status = info.Status,
+                        StatusDescription = info.ShortDescription,
+                        TeamId = info.LatestTeam,
+                        SeasonStatsId = player.SeasonStatsId,
+                    };
+                })
+                .ToList();
 
             // insert into Supabase players table
             var response = await _supabase
                 .From<Player>()
-                .Insert(players);
+                .Insert(filteredPlayerWithInfo);
 
             return Ok(new { message = "Players inserted successfully!" });
         }
@@ -93,6 +125,73 @@ public class PlayersController: ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, $"Error deleting players: {ex.Message}");
+        }
+    }
+
+    // PUT route to update all player information (not their stats)
+    // used to update injury status/current team to be called from Functions App
+    [HttpPut("all")]
+    public async Task<IActionResult> PutAll()
+    {
+        try
+        {
+            // get all player ids from supabase
+            var response = await _supabase
+                .From<Player>()
+                .Get();
+
+            if (response.Models == null || !response.Models.Any())
+            {
+                return NotFound("No players found in database.");
+            }
+
+            var existingPlayers = response.Models;
+            var playerLookup = existingPlayers.ToDictionary(p => p.Id, StringComparer.OrdinalIgnoreCase);
+
+            // get all player information from nflverse service
+            var playerInformation = await _nflVerseService.GetAllPlayerInformationAsync();
+
+            if (playerInformation == null || !playerInformation.Any())
+            {
+                return NotFound("No player information found.");
+            }
+
+            // merge info only for players that exist in Supabase
+            var filteredPlayerWithInfo = playerInformation
+                .Where(info => !string.IsNullOrWhiteSpace(info.Id) && playerLookup.ContainsKey(info.Id))
+                .Select(info =>
+                {
+                    var existingPlayer = playerLookup[info.Id];
+                    return new Player
+                    {
+                        Id = existingPlayer.Id,
+                        Name = existingPlayer.Name,
+                        HeadshotUrl = existingPlayer.HeadshotUrl,
+                        Position = existingPlayer.Position,
+                        Status = info.Status,
+                        StatusDescription = info.ShortDescription,
+                        TeamId = info.LatestTeam,
+                        SeasonStatsId = existingPlayer.SeasonStatsId
+                    };
+                })
+                .ToList();
+
+            if (!filteredPlayerWithInfo.Any())
+            {
+                return BadRequest("No matching players to update.");
+            }
+
+            // update Supabase players table
+            var updateResponse = await _supabase
+                .From<Player>()
+                .OnConflict(x => x.Id)
+                .Upsert(filteredPlayerWithInfo);
+
+            return Ok(new { message = "Player information updated successfully!" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error updating all player information: {ex.Message}");
         }
     }
 
@@ -127,7 +226,8 @@ public class PlayersController: ControllerBase
                 Name = supabasePlayer.Name,
                 HeadshotUrl = supabasePlayer.HeadshotUrl,
                 Position = supabasePlayer.Position,
-                InjuryStatus = supabasePlayer.InjuryStatus,
+                Status = supabasePlayer.Status,
+                StatusDescription = supabasePlayer.StatusDescription,
                 TeamId = supabasePlayer.TeamId,
                 SeasonStatsId = supabasePlayer.SeasonStatsId
             };

@@ -69,7 +69,8 @@ public class SupaBaseController : ControllerBase
                         Name = m.Name,
                         HeadshotUrl = m.HeadshotUrl,
                         Position = m.Position,
-                        InjuryStatus = m.InjuryStatus,
+                        Status = m.Status,
+                        StatusDescription = m.StatusDescription,
                         TeamId = m.TeamId,
                         SeasonStatsId = m.SeasonStatsId
                     }).ToList();

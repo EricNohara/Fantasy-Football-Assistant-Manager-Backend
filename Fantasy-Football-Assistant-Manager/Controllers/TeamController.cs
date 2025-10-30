@@ -60,4 +60,23 @@ public class TeamController : ControllerBase
         }
     }
 
+    // DELETE route for testing
+    [HttpDelete("all")]
+    public async Task<IActionResult> DeleteAll()
+    {
+        try
+        {
+            // Delete all records from the players table
+            await _supabase
+                .From<Team>()
+                .Where(p => p.Id != null)
+                .Delete();
+
+            return Ok(new { message = "All teams deleted successfully!" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error deleting teams: {ex.Message}");
+        }
+    }
 }

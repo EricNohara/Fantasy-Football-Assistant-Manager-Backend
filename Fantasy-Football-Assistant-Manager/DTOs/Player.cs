@@ -1,4 +1,3 @@
-using System;
 using System.Text.Json.Serialization;
 
 namespace Fantasy_Football_Assistant_Manager.DTOs;
@@ -17,11 +16,14 @@ public class Player
     [JsonPropertyName("position")]
     public string Position { get; set; } = string.Empty;
 
-    [JsonPropertyName("injury_status")]
-    public string? InjuryStatus { get; set; }
+    [JsonPropertyName("status")]
+    public string? Status { get; set; }
+
+    [JsonPropertyName("status_description")]
+    public string? StatusDescription { get; set; }
 
     [JsonPropertyName("team_id")]
-    public Guid? TeamId { get; set; }
+    public string? TeamId { get; set; }
 
     [JsonPropertyName("season_stats_id")]
     public Guid? SeasonStatsId { get; set; }
