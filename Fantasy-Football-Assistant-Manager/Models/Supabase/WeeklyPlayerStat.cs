@@ -2,7 +2,7 @@
 using Supabase.Postgrest.Attributes;
 using System.Text.Json.Serialization;
 
-namespace Fantasy_Football_Assistant_Manager.Models;
+namespace Fantasy_Football_Assistant_Manager.Models.Supabase;
 
 // stores a player's stats for a single week
 [Table("weekly_player_stats")]
@@ -22,7 +22,7 @@ public class WeeklyPlayerStat: BaseModel
 
     [Column("player_id")]
     [JsonPropertyName("player_id")]
-    public String PlayerId { get; set; } = String.Empty;
+    public string PlayerId { get; set; } = string.Empty;
 
     [Column("player_stats_id")]
     [JsonPropertyName("player_stats_id")]

@@ -1,4 +1,4 @@
-﻿using Fantasy_Football_Assistant_Manager.Models;
+﻿using Fantasy_Football_Assistant_Manager.Models.Supabase;
 using Fantasy_Football_Assistant_Manager.Services;
 using Microsoft.AspNetCore.Mvc;
 using Supabase;

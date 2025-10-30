@@ -1,10 +1,10 @@
-﻿namespace Fantasy_Football_Assistant_Manager.Models;
+﻿namespace Fantasy_Football_Assistant_Manager.Models.Csv;
 
 // class used for parsing the CSV
 public class PlayerStatCsv
 {
-    public string PlayerId { get; set; } = String.Empty;
-    public string Position { get; set; } = String.Empty;
+    public string PlayerId { get; set; } = string.Empty;
+    public string Position { get; set; } = string.Empty;
     public int Week { get; set; } = -1;
     public int SeasonStartYear { get; set; } = -1;
     public int? Completions { get; set; }

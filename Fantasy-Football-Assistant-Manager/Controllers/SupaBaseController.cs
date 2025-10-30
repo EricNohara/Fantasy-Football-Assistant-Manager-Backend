@@ -1,3 +1,4 @@
+using Fantasy_Football_Assistant_Manager.Models.Supabase;
 using Microsoft.AspNetCore.Mvc;
 using Supabase;
 
@@ -44,7 +45,7 @@ public class SupaBaseController : ControllerBase
             {
                 case "users":
                 {
-                    var res = await _supabase.From<Models.User>().Get(); // fetch data from supabase database 
+                    var res = await _supabase.From<User>().Get(); // fetch data from supabase database 
                     // map supabase result to dto
                     var dtos = res.Models.Select(m => new DTOs.User
                     {
@@ -61,7 +62,7 @@ public class SupaBaseController : ControllerBase
                 }
                 case "players":
                 {
-                    var res = await _supabase.From<Models.Player>().Get();
+                    var res = await _supabase.From<Player>().Get();
                     var dtos = res.Models.Select(m => new DTOs.Player
                     {
                         Id = m.Id,
@@ -76,7 +77,7 @@ public class SupaBaseController : ControllerBase
                 }
                 case "player_stats":
                 {
-                    var res = await _supabase.From<Models.PlayerStat>().Get();
+                    var res = await _supabase.From<PlayerStat>().Get();
                     var dtos = res.Models.Select(m => new DTOs.PlayerStat
                     {
                         Completions = m.Completions,
@@ -111,7 +112,7 @@ public class SupaBaseController : ControllerBase
                 }
                 case "teams":
                 {
-                    var res = await _supabase.From<Models.Team>().Get();
+                    var res = await _supabase.From<Team>().Get();
                     var dtos = res.Models.Select(m => new DTOs.Team
                     {
                         Id = m.Id,
@@ -123,7 +124,7 @@ public class SupaBaseController : ControllerBase
                 }
                 case "team_members":
                 {
-                    var res = await _supabase.From<Models.TeamMember>().Get();
+                    var res = await _supabase.From<TeamMember>().Get();
                     var dtos = res.Models.Select(m => new DTOs.TeamMember
                     {
                         UserId = m.UserId,
@@ -133,7 +134,7 @@ public class SupaBaseController : ControllerBase
                 }
                 case "weekly_player_stats":
                 {
-                    var res = await _supabase.From<Models.WeeklyPlayerStat>().Get();
+                    var res = await _supabase.From<WeeklyPlayerStat>().Get();
                     var dtos = res.Models.Select(m => new DTOs.WeeklyPlayerStat
                     {
                         Id = m.Id,
@@ -145,7 +146,7 @@ public class SupaBaseController : ControllerBase
                 }
                 case "scoring_settings":
                 {
-                    var res = await _supabase.From<Models.ScoringSetting>().Get();
+                    var res = await _supabase.From<ScoringSetting>().Get();
                     var dtos = res.Models.Select(m => new DTOs.ScoringSetting
                     {
                         Id = m.Id,
@@ -159,7 +160,7 @@ public class SupaBaseController : ControllerBase
                 }
                 case "roster_settings":
                 {
-                    var res = await _supabase.From<Models.RosterSetting>().Get();
+                    var res = await _supabase.From<RosterSetting>().Get();
                     var dtos = res.Models.Select(m => new DTOs.RosterSetting
                     {
                         Id = m.Id,
@@ -177,7 +178,7 @@ public class SupaBaseController : ControllerBase
                 }
                 case "team_offensive_stats":
                 {
-                    var res = await _supabase.From<Models.TeamOffensiveStat>().Get();
+                    var res = await _supabase.From<TeamOffensiveStat>().Get();
                     var dtos = res.Models.Select(m => new DTOs.TeamOffensiveStat
                     {
                         Id = m.Id,
@@ -200,7 +201,7 @@ public class SupaBaseController : ControllerBase
                 }
                 case "team_defensive_stats":
                 {
-                    var res = await _supabase.From<Models.TeamDefensiveStat>().Get();
+                    var res = await _supabase.From<TeamDefensiveStat>().Get();
                     var dtos = res.Models.Select(m => new DTOs.TeamDefensiveStat
                     {
                         Id = m.Id,

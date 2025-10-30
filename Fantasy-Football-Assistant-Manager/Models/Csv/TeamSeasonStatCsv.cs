@@ -1,8 +1,8 @@
-﻿namespace Fantasy_Football_Assistant_Manager.Models;
+﻿namespace Fantasy_Football_Assistant_Manager.Models.Csv;
 
 public class TeamSeasonStatCsv
 {
-    public string Team { get; set; } = String.Empty;
+    public string Team { get; set; } = string.Empty;
 
     // DEFENSIVE STATS
     public int? TacklesForLoss { get; set; }

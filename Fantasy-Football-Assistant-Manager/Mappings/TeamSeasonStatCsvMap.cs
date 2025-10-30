@@ -1,5 +1,5 @@
 ﻿using CsvHelper.Configuration;
-using Fantasy_Football_Assistant_Manager.Models;
+using Fantasy_Football_Assistant_Manager.Models.Csv;
 
 namespace Fantasy_Football_Assistant_Manager.Mappings;
 
