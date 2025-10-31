@@ -1,5 +1,6 @@
 ﻿using Fantasy_Football_Assistant_Manager.Models.Supabase;
 using Fantasy_Football_Assistant_Manager.Services;
+using Fantasy_Football_Assistant_Manager.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Supabase;
 
@@ -18,10 +19,6 @@ public class PlayerWeeklyStatController : ControllerBase
         _nflVerseService = nflVerseService;
         _supabase = supabase;
     }
-
-    // helper function for data cleaning
-    private static int? NullIfZero(int? value) => value == 0 ? null : value;
-    private static float? NullIfZero(float? value) => value == 0f ? null : value;
 
     // POST route for adding all weekly player stats up to the most recent week
     // to be called from Azure Functions App on a schedule for weekly updates
@@ -84,31 +81,31 @@ public class PlayerWeeklyStatController : ControllerBase
                     return new PlayerStat
                     {
                         Id = id,
-                        Completions = NullIfZero(p.Completions),
-                        PassingAttempts = NullIfZero(p.PassingAttempts),
-                        PassingYards = NullIfZero(p.PassingYards),
-                        PassingTds = NullIfZero(p.PassingTds),
-                        InterceptionsAgainst = NullIfZero(p.InterceptionsAgainst),
-                        SacksAgainst = NullIfZero(p.SacksAgainst),
-                        FumblesAgainst = NullIfZero(p.FumblesAgainst),
-                        PassingFirstDowns = NullIfZero(p.PassingFirstDowns),
-                        PassingEpa = NullIfZero(p.PassingEpa),
-                        Carries = NullIfZero(p.Carries),
-                        RushingYards = NullIfZero(p.RushingYards),
-                        RushingTds = NullIfZero(p.RushingTds),
-                        RushingFirstDowns = NullIfZero(p.RushingFirstDowns),
-                        RushingEpa = NullIfZero(p.RushingEpa),
-                        Receptions = NullIfZero(p.Receptions),
-                        Targets = NullIfZero(p.Targets),
-                        ReceivingYards = NullIfZero(p.ReceivingYards),
-                        ReceivingTds = NullIfZero(p.ReceivingTds),
-                        ReceivingFirstDowns = NullIfZero(p.ReceivingFirstDowns),
-                        ReceivingEpa = NullIfZero(p.ReceivingEpa),
+                        Completions = ControllerHelpers.NullIfZero(p.Completions),
+                        PassingAttempts = ControllerHelpers.NullIfZero(p.PassingAttempts),
+                        PassingYards = ControllerHelpers.NullIfZero(p.PassingYards),
+                        PassingTds = ControllerHelpers.NullIfZero(p.PassingTds),
+                        InterceptionsAgainst = ControllerHelpers.NullIfZero(p.InterceptionsAgainst),
+                        SacksAgainst = ControllerHelpers.NullIfZero(p.SacksAgainst),
+                        FumblesAgainst = ControllerHelpers.NullIfZero(p.FumblesAgainst),
+                        PassingFirstDowns = ControllerHelpers.NullIfZero(p.PassingFirstDowns),
+                        PassingEpa = ControllerHelpers.NullIfZero(p.PassingEpa),
+                        Carries = ControllerHelpers.NullIfZero(p.Carries),
+                        RushingYards = ControllerHelpers.NullIfZero(p.RushingYards),
+                        RushingTds = ControllerHelpers.NullIfZero(p.RushingTds),
+                        RushingFirstDowns = ControllerHelpers.NullIfZero(p.RushingFirstDowns),
+                        RushingEpa = ControllerHelpers.NullIfZero(p.RushingEpa),
+                        Receptions = ControllerHelpers.NullIfZero(p.Receptions),
+                        Targets = ControllerHelpers.NullIfZero(p.Targets),
+                        ReceivingYards = ControllerHelpers.NullIfZero(p.ReceivingYards),
+                        ReceivingTds = ControllerHelpers.NullIfZero(p.ReceivingTds),
+                        ReceivingFirstDowns = ControllerHelpers.NullIfZero(p.ReceivingFirstDowns),
+                        ReceivingEpa = ControllerHelpers.NullIfZero(p.ReceivingEpa),
                         FgMadeList = p.FgMadeList,
                         FgMissedList = p.FgMissedList,
                         FgBlockedList = p.FgBlockedList,
-                        PadAttempts = NullIfZero(p.PadAttempts),
-                        PatPercent = NullIfZero(p.PatPercent),
+                        PadAttempts = ControllerHelpers.NullIfZero(p.PadAttempts),
+                        PatPercent = ControllerHelpers.NullIfZero(p.PatPercent),
                         FantasyPoints = p.FantasyPoints,
                         FantasyPointsPpr = p.FantasyPointsPpr
                     };

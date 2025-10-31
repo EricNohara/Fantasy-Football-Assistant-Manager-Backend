@@ -20,6 +20,8 @@ public class NflVerseService
     private const string SEASON_TEAM_STATS_URL = "https://github.com/nflverse/nflverse-data/releases/download/stats_team/stats_team_regpost_2025.csv.gz";
     private const string TEAM_DATA_URL = "https://github.com/nflverse/nflverse-data/releases/download/teams/teams_colors_logos.csv.gz";
 
+    private const string WEEKLY_GAME_DATA_URL = "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.csv.gz";
+
     // defensive positions (we only store offensive players)
     private HashSet<string> DEFENSIVE_POSITIONS = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
@@ -75,9 +77,6 @@ public class NflVerseService
         "WAS"  // Washington Commanders
     };
 
-    // current season
-    private const int CURRENT_SEASON = 2025;
-
     public NflVerseService(HttpClient httpClient)
     {
         _httpClient = httpClient;
@@ -118,6 +117,7 @@ public class NflVerseService
 
     public async Task<List<Player>> GetAllOffensivePlayersAsync()
     {
+        // return only offensive players
         return await LoadCsvDataAsync<Player, PlayerMap>(
             SEASON_PLAYER_STATS_URL,
             p => !string.IsNullOrWhiteSpace(p.Id) && !DEFENSIVE_POSITIONS.Contains(p.Position)
@@ -126,6 +126,7 @@ public class NflVerseService
 
     public async Task<List<PlayerStatCsv>> GetAllOffensivePlayerSeasonStatsAsync()
     {
+        // return only offensive players
         return await LoadCsvDataAsync<PlayerStatCsv, PlayerStatCsvMap>(
             SEASON_PLAYER_STATS_URL,
             p => !string.IsNullOrWhiteSpace(p.PlayerId) && !DEFENSIVE_POSITIONS.Contains(p.Position)
@@ -134,30 +135,43 @@ public class NflVerseService
 
     public async Task<List<PlayerStatCsv>> GetAllOffensivePlayerWeeklyStatsAsync()
     {
+        // return only offensive players
         return await LoadCsvDataAsync<PlayerStatCsv, PlayerStatCsvMap>(
             WEEKLY_PLAYER_STATS_URL,
             p => !string.IsNullOrWhiteSpace(p.PlayerId) && !DEFENSIVE_POSITIONS.Contains(p.Position)
         );
     }
 
-    public async Task<List<PlayerInformationCsv>> GetAllPlayerInformationAsync()
+    public async Task<List<PlayerInformationCsv>> GetAllPlayerInformationAsync(int currentSeason)
     {
+        // return only information from players playing THIS season
         return await LoadCsvDataAsync<PlayerInformationCsv, PlayerInformationCsvMap>(
             PLAYER_INFORMATION_URL,
-            r => !string.IsNullOrWhiteSpace(r.Id) && r.LastSeason == CURRENT_SEASON
+            r => !string.IsNullOrWhiteSpace(r.Id) && r.LastSeason == currentSeason
         );
     }
 
     public async Task<List<TeamSeasonStatCsv>> GetAllTeamSeasonStatsAsync()
     {
+        // return all season team stats
         return await LoadCsvDataAsync<TeamSeasonStatCsv, TeamSeasonStatCsvMap>(SEASON_TEAM_STATS_URL);
     }
 
     public async Task<List<TeamDataCsv>> GetAllTeamDataAsync()
     {
+        // return only the teams CURRENTLY in the NFL
         return await LoadCsvDataAsync<TeamDataCsv, TeamDataCsvMap>(
             TEAM_DATA_URL,
             r => !string.IsNullOrWhiteSpace(r.Id) && CURRENT_TEAM_IDS_IN_NFL.Contains(r.Id)
+        );
+    }
+
+    public async Task<List<GameThisWeekCsv>> GetAllGamesThisWeekAsync(int season, int week)
+    {
+        // return only the games for the specified season and week
+        return await LoadCsvDataAsync<GameThisWeekCsv, GameThisWeekCsvMap>(
+            WEEKLY_GAME_DATA_URL,
+            r => r.Season == season && r.Week == week
         );
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Fantasy_Football_Assistant_Manager.Models.Supabase;
 using Fantasy_Football_Assistant_Manager.Services;
+using Fantasy_Football_Assistant_Manager.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Supabase;
 
@@ -15,10 +16,6 @@ public class TeamSeasonStatController : ControllerBase
         _nflVerseService = nflVerseService;
         _supabase = supabase;
     }
-
-    // helper function for data cleaning
-    private static int? NullIfZero(int? value) => value == 0 ? null : value;
-    private static float? NullIfZero(float? value) => value == 0f ? null : value;
 
     [HttpPost("all")]
     public async Task<IActionResult> PostAll()
@@ -53,20 +50,20 @@ public class TeamSeasonStatController : ControllerBase
                 var offensiveStat = new TeamOffensiveStat
                 {
                     Id = offensiveId,
-                    Completions = NullIfZero(stat.Completions),
-                    Attempts = NullIfZero(stat.Attempts),
-                    PassingYards = NullIfZero(stat.PassingYards),
-                    PassingTds = NullIfZero(stat.PassingTds),
-                    PassingInterceptions = NullIfZero(stat.PassingInterceptions),
-                    SacksAgainst = NullIfZero(stat.SacksAgainst),
-                    FumblesAgainst = NullIfZero(stat.FumblesAgainst),
-                    Carries = NullIfZero(stat.Carries),
-                    RushingYards = NullIfZero(stat.RushingYards),
-                    RushingTds = NullIfZero(stat.RushingTds),
-                    Receptions = NullIfZero(stat.Receptions),
-                    Targets = NullIfZero(stat.Targets),
-                    ReceivingYards = NullIfZero(stat.ReceivingYards),
-                    ReceivingTds = NullIfZero(stat.ReceivingTds)
+                    Completions = ControllerHelpers.NullIfZero(stat.Completions),
+                    Attempts = ControllerHelpers.NullIfZero(stat.Attempts),
+                    PassingYards = ControllerHelpers.NullIfZero(stat.PassingYards),
+                    PassingTds = ControllerHelpers.NullIfZero(stat.PassingTds),
+                    PassingInterceptions = ControllerHelpers.NullIfZero(stat.PassingInterceptions),
+                    SacksAgainst = ControllerHelpers.NullIfZero(stat.SacksAgainst),
+                    FumblesAgainst = ControllerHelpers.NullIfZero(stat.FumblesAgainst),
+                    Carries = ControllerHelpers.NullIfZero(stat.Carries),
+                    RushingYards = ControllerHelpers.NullIfZero(stat.RushingYards),
+                    RushingTds = ControllerHelpers.NullIfZero(stat.RushingTds),
+                    Receptions = ControllerHelpers.NullIfZero(stat.Receptions),
+                    Targets = ControllerHelpers.NullIfZero(stat.Targets),
+                    ReceivingYards = ControllerHelpers.NullIfZero(stat.ReceivingYards),
+                    ReceivingTds = ControllerHelpers.NullIfZero(stat.ReceivingTds)
                 };
 
                 offensiveStats.Add(offensiveStat);
@@ -75,16 +72,16 @@ public class TeamSeasonStatController : ControllerBase
                 var defensiveStat = new TeamDefensiveStat
                 {
                     Id = defensiveId,
-                    TacklesForLoss = NullIfZero(stat.TacklesForLoss),
-                    TacklesForLossYards = NullIfZero(stat.TacklesForLossYards),
-                    FumblesFor = NullIfZero(stat.FumblesFor),
-                    SacksFor = NullIfZero(stat.SacksFor),
-                    SackYardsFor = NullIfZero(stat.SackYardsFor),
-                    InterceptionsFor = NullIfZero(stat.InterceptionsFor),
-                    InterceptionYardsFor = NullIfZero(stat.InterceptionYardsFor),
-                    DefTds = NullIfZero(stat.DefTds),
-                    Safeties = NullIfZero(stat.Safeties),
-                    PassDefended = NullIfZero(stat.PassDefended)
+                    TacklesForLoss = ControllerHelpers.NullIfZero(stat.TacklesForLoss),
+                    TacklesForLossYards = ControllerHelpers.NullIfZero(stat.TacklesForLossYards),
+                    FumblesFor = ControllerHelpers.NullIfZero(stat.FumblesFor),
+                    SacksFor = ControllerHelpers.NullIfZero(stat.SacksFor),
+                    SackYardsFor = ControllerHelpers.NullIfZero(stat.SackYardsFor),
+                    InterceptionsFor = ControllerHelpers.NullIfZero(stat.InterceptionsFor),
+                    InterceptionYardsFor = ControllerHelpers.NullIfZero(stat.InterceptionYardsFor),
+                    DefTds = ControllerHelpers.NullIfZero(stat.DefTds),
+                    Safeties = ControllerHelpers.NullIfZero(stat.Safeties),
+                    PassDefended = ControllerHelpers.NullIfZero(stat.PassDefended)
                 };
 
                 defensiveStats.Add(defensiveStat);

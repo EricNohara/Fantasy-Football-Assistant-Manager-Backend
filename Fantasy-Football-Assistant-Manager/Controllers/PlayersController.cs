@@ -1,5 +1,6 @@
 ﻿using Fantasy_Football_Assistant_Manager.Models.Supabase;
 using Fantasy_Football_Assistant_Manager.Services;
+using Fantasy_Football_Assistant_Manager.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Supabase;
 
@@ -65,8 +66,11 @@ public class PlayersController: ControllerBase
                 return BadRequest("No players found to insert.");
             }
 
+            // get the current season and week from supabase
+            var (currentSeason, currentWeek) = await ControllerHelpers.GetCurrentSeasonAndWeekAsync(_supabase);
+
             // fetch player information using service
-            var playerInformation = await _nflVerseService.GetAllPlayerInformationAsync();
+            var playerInformation = await _nflVerseService.GetAllPlayerInformationAsync(currentSeason);
             if (playerInformation == null || !playerInformation.Any())
             {
                 return BadRequest("No player information found.");
@@ -148,8 +152,11 @@ public class PlayersController: ControllerBase
             var existingPlayers = response.Models;
             var playerLookup = existingPlayers.ToDictionary(p => p.Id, StringComparer.OrdinalIgnoreCase);
 
+            // get the current season and week from supabase
+            var (currentSeason, currentWeek) = await ControllerHelpers.GetCurrentSeasonAndWeekAsync(_supabase);
+
             // get all player information from nflverse service
-            var playerInformation = await _nflVerseService.GetAllPlayerInformationAsync();
+            var playerInformation = await _nflVerseService.GetAllPlayerInformationAsync(currentSeason);
 
             if (playerInformation == null || !playerInformation.Any())
             {
