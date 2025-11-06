@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Supabase;
 using Supabase.Gotrue;
+using System.Net.Http.Headers;
+using Microsoft.Extensions.Options;
 
 namespace Fantasy_Football_Assistant_Manager.Controllers;
 
@@ -10,11 +12,17 @@ namespace Fantasy_Football_Assistant_Manager.Controllers;
 [Route("api/[controller]")]
 public class UsersController: ControllerBase
 {
-    private readonly Supabase.Client supabase;
+    private readonly Supabase.Client _supabase;
+    private readonly HttpClient _httpClient;
+    private readonly string _supabaseUrl;
+    private readonly string _serviceRoleKey;
 
-    public UsersController(Supabase.Client supabase)
+    public UsersController(Supabase.Client supabase, IConfiguration config)
     {
-        this.supabase = supabase;
+        _supabase = supabase;
+        _httpClient = new HttpClient();
+        _supabaseUrl = config["Supabase:Url"];
+        _serviceRoleKey = config["Supabase:ServiceRoleKey"];
     }
 
     // SIGN UP
@@ -29,7 +37,7 @@ public class UsersController: ControllerBase
         try
         {
             // Sign up user (service role key)
-            var session = await supabase.Auth.SignUp(req.Email, req.Password);
+            var session = await _supabase.Auth.SignUp(req.Email, req.Password);
 
             if (session?.User == null || string.IsNullOrEmpty(session.User.Id))
             {
@@ -46,13 +54,9 @@ public class UsersController: ControllerBase
                 TeamName = req.TeamName
             };
 
-            await supabase.From<Models.Supabase.User>().Insert(user);
+            await _supabase.From<Models.Supabase.User>().Insert(user);
 
-            return Ok(new
-            {
-                AccessToken = session.AccessToken,
-                RefreshToken = session.RefreshToken,
-            });
+            return Ok(new { message = "User created successfully" });
         }
         catch (Supabase.Postgrest.Exceptions.PostgrestException e) when (e.Message.Contains("duplicate"))
         {
@@ -61,6 +65,58 @@ public class UsersController: ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, $"Error creating user: {ex.Message}");
+        }
+    }
+
+    // DELETE
+    [HttpDelete]
+    public async Task<IActionResult> Delete()
+    {
+        try
+        {
+            // get the token from the Authorization header
+            var authHeader = Request.Headers["Authorization"].ToString();
+            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+            {
+                return Unauthorized("Missing or invalid token");
+            }
+
+            var accessToken = authHeader.Substring("Bearer ".Length);
+
+            // verify the token with Supabase
+            var user = await _supabase.Auth.GetUser(accessToken);
+            if (user == null)
+            {
+                return Unauthorized("Invalid token");
+            }
+
+            var userId = Guid.Parse(user.Id);
+            if (userId == Guid.Empty)
+            {
+                return Unauthorized("Invalid token");
+            }
+
+            // delete the user from public db
+            await _supabase
+                .From<Models.Supabase.User>()
+                .Where(u => u.Id == userId)
+                .Delete();
+
+            // delete the Supabase Auth user using admin API
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _serviceRoleKey);
+
+            var adminResponse = await _httpClient.DeleteAsync($"{_supabaseUrl}/auth/v1/admin/users/{userId}");
+
+            if (!adminResponse.IsSuccessStatusCode)
+            {
+                return StatusCode((int)adminResponse.StatusCode, adminResponse.Content.ToString());
+            }
+
+            return Ok(new { message = "User deleted successfully" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error deleting user: {ex.Message}");
         }
     }
 }
