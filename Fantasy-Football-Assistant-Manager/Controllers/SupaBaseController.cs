@@ -55,7 +55,6 @@ public class SupaBaseController : ControllerBase
                         RosterSettingsId = m.RosterSettingsId,
                         ScoringSettingsId = m.ScoringSettingsId,
                         TokensLeft = m.TokensLeft,
-                        TeamMemberIds = m.TeamMemberIds ?? new List<string>()
                     }).ToList();
                     // Return as anonymous object to ensure clean serialization
                     return new JsonResult(dtos);

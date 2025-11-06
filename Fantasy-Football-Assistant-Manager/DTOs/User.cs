@@ -23,7 +23,4 @@ public class User
 
     [JsonPropertyName("tokens_left")]
     public int TokensLeft { get; set; } = 0;
-
-    [JsonPropertyName("team_member_ids")]
-    public List<string> TeamMemberIds { get; set; } = new List<string>();
 }
