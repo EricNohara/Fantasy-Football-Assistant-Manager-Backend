@@ -12,12 +12,14 @@ public class PlayersController: ControllerBase
 {
     private readonly NflVerseService _nflVerseService;
     private readonly Client _supabase;
+    private readonly UpdateSupabaseService _updateSupabaseService;
 
     // injects NflVerseService via dependency injection
     public PlayersController(NflVerseService nflVerseService, Client supabase)
     {
         _nflVerseService = nflVerseService;
         _supabase = supabase;
+        _updateSupabaseService = new UpdateSupabaseService(_nflVerseService, _supabase);
     }
 
     // ALL PLAYERS ROUTES
@@ -139,61 +141,7 @@ public class PlayersController: ControllerBase
     {
         try
         {
-            // get all player ids from supabase
-            var response = await _supabase
-                .From<Player>()
-                .Get();
-
-            if (response.Models == null || !response.Models.Any())
-            {
-                return NotFound("No players found in database.");
-            }
-
-            var existingPlayers = response.Models;
-            var playerLookup = existingPlayers.ToDictionary(p => p.Id, StringComparer.OrdinalIgnoreCase);
-
-            // get the current season and week from supabase
-            var (currentSeason, currentWeek) = await ControllerHelpers.GetCurrentSeasonAndWeekAsync(_supabase);
-
-            // get all player information from nflverse service
-            var playerInformation = await _nflVerseService.GetAllPlayerInformationAsync(currentSeason);
-
-            if (playerInformation == null || !playerInformation.Any())
-            {
-                return NotFound("No player information found.");
-            }
-
-            // merge info only for players that exist in Supabase
-            var filteredPlayerWithInfo = playerInformation
-                .Where(info => !string.IsNullOrWhiteSpace(info.Id) && playerLookup.ContainsKey(info.Id))
-                .Select(info =>
-                {
-                    var existingPlayer = playerLookup[info.Id];
-                    return new Player
-                    {
-                        Id = existingPlayer.Id,
-                        Name = existingPlayer.Name,
-                        HeadshotUrl = existingPlayer.HeadshotUrl,
-                        Position = existingPlayer.Position,
-                        Status = info.Status,
-                        StatusDescription = info.ShortDescription,
-                        TeamId = info.LatestTeam,
-                        SeasonStatsId = existingPlayer.SeasonStatsId
-                    };
-                })
-                .ToList();
-
-            if (!filteredPlayerWithInfo.Any())
-            {
-                return BadRequest("No matching players to update.");
-            }
-
-            // update Supabase players table
-            var updateResponse = await _supabase
-                .From<Player>()
-                .OnConflict(x => x.Id)
-                .Upsert(filteredPlayerWithInfo);
-
+            await _updateSupabaseService.UpdateAllPlayerNonStatDataAsync();
             return Ok(new { message = "Player information updated successfully!" });
         }
         catch (Exception ex)

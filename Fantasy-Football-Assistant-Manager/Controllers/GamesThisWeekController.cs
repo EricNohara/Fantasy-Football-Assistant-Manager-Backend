@@ -12,11 +12,13 @@ public class GamesThisWeekController : ControllerBase
 {
     private readonly NflVerseService _nflVerseService;
     private readonly Client _supabase;
+    private readonly UpdateSupabaseService _updateSupabaseService;
 
     public GamesThisWeekController(NflVerseService nflVerseService, Client supabase)
     {
         _nflVerseService = nflVerseService;
         _supabase = supabase;
+        _updateSupabaseService = new UpdateSupabaseService(_nflVerseService, _supabase);
     }
 
     [HttpPost("all")]
@@ -76,50 +78,7 @@ public class GamesThisWeekController : ControllerBase
     {
         try
         {
-            // get current season and week from supabase
-            var (currentSeason, currentWeek) = await ControllerHelpers.GetCurrentSeasonAndWeekAsync(_supabase);
-
-            // get game data from nfl verse service
-            var games = await _nflVerseService.GetAllGamesThisWeekAsync(currentSeason, currentWeek);
-
-            if (games == null || !games.Any())
-            {
-                return BadRequest(new { message = "No games found for current week." });
-            }
-
-            // map GameThisWeekCsv to GameThisWeek supabase model
-            var gamesToInsert = games.Select(g => new GameThisWeek
-            {
-                Id = Guid.NewGuid(),
-                HomeTeam = g.HomeTeam,
-                AwayTeam = g.AwayTeam,
-                Weekday = g.Weekday,
-                GameDateTime = g.GameDateTime,
-                StadiumName = g.StadiumName,
-                StadiumStyle = g.StadiumStyle,
-                IsDivisionalGame = g.IsDivisionalGame,
-                HomeRestDays = g.HomeRestDays,
-                AwayRestDays = g.AwayRestDays,
-                HomeMoneyline = g.HomeMoneyline,
-                AwayMoneyline = g.AwayMoneyline,
-                HomeSpreadOdds = g.HomeSpreadOdds,
-                AwaySpreadOdds = g.AwaySpreadOdds,
-                SpreadLine = g.SpreadLine,
-                TotalLine = g.TotalLine,
-                UnderOdds = g.UnderOdds,
-                OverOdds = g.OverOdds
-            }).ToList();
-
-            // clear the games this week table and repopulate it
-            await _supabase
-                .From<GameThisWeek>()
-                .Where(g => g.Id != null)
-                .Delete();
-
-            await _supabase
-                .From<GameThisWeek>()
-                .Insert(gamesToInsert);
-
+            await _updateSupabaseService.UpdateGamesThisWeekAsync();
             return Ok(new { message = "Successfully updated all games this week" });
         }
         catch (Exception ex)
