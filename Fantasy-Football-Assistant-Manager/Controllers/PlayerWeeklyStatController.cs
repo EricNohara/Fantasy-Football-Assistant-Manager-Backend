@@ -12,12 +12,14 @@ public class PlayerWeeklyStatController : ControllerBase
 {
     private readonly NflVerseService _nflVerseService;
     private readonly Client _supabase;
+    private readonly UpdateSupabaseService _updateSupabaseService;
 
     // injects NflVerseService via dependency injection
     public PlayerWeeklyStatController(NflVerseService nflVerseService, Client supabase)
     {
         _nflVerseService = nflVerseService;
         _supabase = supabase;
+        _updateSupabaseService = new UpdateSupabaseService(_nflVerseService, _supabase);
     }
 
     // POST route for adding all weekly player stats up to the most recent week
@@ -27,102 +29,8 @@ public class PlayerWeeklyStatController : ControllerBase
     {
         try
         {
-            var weeklyStats = await _nflVerseService.GetAllOffensivePlayerWeeklyStatsAsync();
-
-            if (weeklyStats == null || !weeklyStats.Any())
-            {
-                return BadRequest("No season stats found to insert.");
-            }
-
-            // Get the most latest week's data stored in the db
-            var latestWeekResponse = await _supabase
-                .From<WeeklyPlayerStat>()
-                .Select("week")
-                .Order("week", Supabase.Postgrest.Constants.Ordering.Descending)
-                .Limit(1)
-                .Get();
-
-            // set the week to 0 if there are none in the db currently
-            var latestWeek = latestWeekResponse.Models.FirstOrDefault()?.Week ?? 0;
-
-            // find the latest week in new data
-            int newLatestWeek = weeklyStats.Max(s => s.Week);
-
-            // only insert the weeks AFTER the last recorded one
-            var newStats = weeklyStats
-                .Where(s => s.Week > latestWeek)
-                .ToList();
-
-            if (!newStats.Any())
-            {
-                return Ok(new { message = $"No new weekly stats to insert (latest week: {latestWeek})" });
-            }
-
-            // convert the newStats to PlayerStats model while generating list of WeeklyPlayerStat models
-            List<WeeklyPlayerStat> weeklyPlayerStats = new List<WeeklyPlayerStat>();
-
-            var playerStats = newStats
-                .Select(p =>
-                {
-                    var id = Guid.NewGuid();
-
-                    // create and insert new WeeklyPlayerStat model
-                    var weeklyStat = new WeeklyPlayerStat
-                    {
-                        Id = Guid.NewGuid(),
-                        PlayerStatsId = id,
-                        PlayerId = p.PlayerId,
-                        Week = p.Week,
-                        SeasonStartYear = p.SeasonStartYear,
-                    };
-
-                    weeklyPlayerStats.Add(weeklyStat);
-
-                    return new PlayerStat
-                    {
-                        Id = id,
-                        Completions = ControllerHelpers.NullIfZero(p.Completions),
-                        PassingAttempts = ControllerHelpers.NullIfZero(p.PassingAttempts),
-                        PassingYards = ControllerHelpers.NullIfZero(p.PassingYards),
-                        PassingTds = ControllerHelpers.NullIfZero(p.PassingTds),
-                        InterceptionsAgainst = ControllerHelpers.NullIfZero(p.InterceptionsAgainst),
-                        SacksAgainst = ControllerHelpers.NullIfZero(p.SacksAgainst),
-                        FumblesAgainst = ControllerHelpers.NullIfZero(p.FumblesAgainst),
-                        PassingFirstDowns = ControllerHelpers.NullIfZero(p.PassingFirstDowns),
-                        PassingEpa = ControllerHelpers.NullIfZero(p.PassingEpa),
-                        Carries = ControllerHelpers.NullIfZero(p.Carries),
-                        RushingYards = ControllerHelpers.NullIfZero(p.RushingYards),
-                        RushingTds = ControllerHelpers.NullIfZero(p.RushingTds),
-                        RushingFirstDowns = ControllerHelpers.NullIfZero(p.RushingFirstDowns),
-                        RushingEpa = ControllerHelpers.NullIfZero(p.RushingEpa),
-                        Receptions = ControllerHelpers.NullIfZero(p.Receptions),
-                        Targets = ControllerHelpers.NullIfZero(p.Targets),
-                        ReceivingYards = ControllerHelpers.NullIfZero(p.ReceivingYards),
-                        ReceivingTds = ControllerHelpers.NullIfZero(p.ReceivingTds),
-                        ReceivingFirstDowns = ControllerHelpers.NullIfZero(p.ReceivingFirstDowns),
-                        ReceivingEpa = ControllerHelpers.NullIfZero(p.ReceivingEpa),
-                        FgMadeList = p.FgMadeList,
-                        FgMissedList = p.FgMissedList,
-                        FgBlockedList = p.FgBlockedList,
-                        PadAttempts = ControllerHelpers.NullIfZero(p.PadAttempts),
-                        PatPercent = ControllerHelpers.NullIfZero(p.PatPercent),
-                        FantasyPoints = p.FantasyPoints,
-                        FantasyPointsPpr = p.FantasyPointsPpr
-                    };
-                })
-                .ToList();
-
-            // insert PlayerStat models into player_stats table
-            var insertedStatsResponse = await _supabase
-                .From<PlayerStat>()
-                .Insert(playerStats);
-
-            // insert new relational record into weekly_player_stats table
-            var insertedWeeklyResponse = await _supabase
-                .From<WeeklyPlayerStat>()
-                .Insert(weeklyPlayerStats);
-
-            return Ok(new { message = $"Inserted weekly stats successfully for weeks {latestWeek + 1}–{newStats.Max(s => s.Week)}" });
+            var (startWeek, endWeek) = await _updateSupabaseService.UpdateStatsFromLastThreeWeeksAsync();
+            return Ok(new { message = $"Inserted weekly stats successfully for weeks {startWeek}–{endWeek}" });
         }
         catch (Exception ex)
         {
