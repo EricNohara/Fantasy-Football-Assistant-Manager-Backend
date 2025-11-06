@@ -1,10 +1,5 @@
 ﻿using Fantasy_Football_Assistant_Manager.DTOs;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
-using Supabase;
-using Supabase.Gotrue;
-using System.Net.Http.Headers;
-using Microsoft.Extensions.Options;
 
 namespace Fantasy_Football_Assistant_Manager.Controllers;
 
@@ -13,16 +8,10 @@ namespace Fantasy_Football_Assistant_Manager.Controllers;
 public class UsersController: ControllerBase
 {
     private readonly Supabase.Client _supabase;
-    private readonly HttpClient _httpClient;
-    private readonly string _supabaseUrl;
-    private readonly string _serviceRoleKey;
 
-    public UsersController(Supabase.Client supabase, IConfiguration config)
+    public UsersController(Supabase.Client supabase)
     {
         _supabase = supabase;
-        _httpClient = new HttpClient();
-        _supabaseUrl = config["Supabase:Url"];
-        _serviceRoleKey = config["Supabase:ServiceRoleKey"];
     }
 
     // SIGN UP
@@ -101,16 +90,6 @@ public class UsersController: ControllerBase
                 .From<Models.Supabase.User>()
                 .Where(u => u.Id == userId)
                 .Delete();
-
-            // delete the Supabase Auth user using admin API
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _serviceRoleKey);
-
-            var adminResponse = await _httpClient.DeleteAsync($"{_supabaseUrl}/auth/v1/admin/users/{userId}");
-
-            if (!adminResponse.IsSuccessStatusCode)
-            {
-                return StatusCode((int)adminResponse.StatusCode, adminResponse.Content.ToString());
-            }
 
             return Ok(new { message = "User deleted successfully" });
         }
