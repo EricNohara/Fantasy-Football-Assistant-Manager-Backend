@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace Fantasy_Football_Assistant_Manager.DTOs;
+namespace FFOracle.DTOs;
 
 public class User
 {

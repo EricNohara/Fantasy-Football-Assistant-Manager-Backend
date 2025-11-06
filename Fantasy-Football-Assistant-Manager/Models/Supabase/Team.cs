@@ -2,7 +2,7 @@
 using Supabase.Postgrest.Attributes;
 using System.Text.Json.Serialization;
 
-namespace Fantasy_Football_Assistant_Manager.Models.Supabase;
+namespace FFOracle.Models.Supabase;
 
 [Table("teams")]
 public class Team : BaseModel

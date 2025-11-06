@@ -1,4 +1,4 @@
-using Fantasy_Football_Assistant_Manager.Services;
+using FFOracle.Services;
 using Supabase;
 //using Supabase.Postgrest.Models;
 

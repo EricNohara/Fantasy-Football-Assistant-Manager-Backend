@@ -2,7 +2,7 @@
 using Supabase.Postgrest.Attributes;
 using System.Text.Json.Serialization;
 
-namespace Fantasy_Football_Assistant_Manager.Models.Supabase;
+namespace FFOracle.Models.Supabase;
 
 // stats used when finding DEF to start by matchup
 [Table("team_offensive_stats")]

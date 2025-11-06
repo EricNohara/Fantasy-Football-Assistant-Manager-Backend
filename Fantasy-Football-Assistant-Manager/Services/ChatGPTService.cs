@@ -1,6 +1,6 @@
 ﻿using OpenAI.Chat;
 
-namespace Fantasy_Football_Assistant_Manager.Services;
+namespace FFOracle.Services;
 
 public class ChatGPTService
 {

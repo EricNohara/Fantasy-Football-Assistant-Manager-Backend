@@ -1,4 +1,4 @@
-﻿namespace Fantasy_Football_Assistant_Manager.DTOs;
+﻿namespace FFOracle.DTOs;
 
 public class CreateUserRequest
 {

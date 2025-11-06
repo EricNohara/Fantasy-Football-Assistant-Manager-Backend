@@ -2,9 +2,9 @@
 using Supabase.Postgrest.Attributes;
 using System.Text.Json.Serialization;
 
-namespace Fantasy_Football_Assistant_Manager.Models.Supabase;
+namespace FFOracle.Models.Supabase;
 
-// stores a player's stats for a single week
+// stores a player's stats for a single week    
 [Table("weekly_player_stats")]
 public class WeeklyPlayerStat: BaseModel
 {

@@ -1,8 +1,8 @@
-﻿using Fantasy_Football_Assistant_Manager.Models;
-using Fantasy_Football_Assistant_Manager.Models.Supabase;
+﻿using FFOracle.Models;
+using FFOracle.Models.Supabase;
 using Supabase;
 
-namespace Fantasy_Football_Assistant_Manager.Utils;
+namespace FFOracle.Utils;
 
 public class ControllerHelpers
 {

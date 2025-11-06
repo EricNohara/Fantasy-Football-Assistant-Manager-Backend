@@ -1,8 +1,8 @@
 ﻿using CsvHelper.Configuration;
-using Fantasy_Football_Assistant_Manager.Models.Csv;
+using FFOracle.Models.Csv;
 using System.Globalization;
 
-namespace Fantasy_Football_Assistant_Manager.Mappings;
+namespace FFOracle.Mappings;
 
 public class GameThisWeekCsvMap: ClassMap<GameThisWeekCsv>
 {

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Fantasy_Football_Assistant_Manager.Services;
+using FFOracle.Services;
 
-namespace Fantasy_Football_Assistant_Manager.Controllers;
+namespace FFOracle.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

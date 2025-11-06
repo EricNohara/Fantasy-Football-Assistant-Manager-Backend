@@ -1,12 +1,12 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
-using Fantasy_Football_Assistant_Manager.Mappings;
-using Fantasy_Football_Assistant_Manager.Models.Csv;
-using Fantasy_Football_Assistant_Manager.Models.Supabase;
+using FFOracle.Mappings;
+using FFOracle.Models.Csv;
+using FFOracle.Models.Supabase;
 using System.Globalization;
 using System.IO.Compression;
 
-namespace Fantasy_Football_Assistant_Manager.Services;
+namespace FFOracle.Services;
 
 public class NflVerseService
 {

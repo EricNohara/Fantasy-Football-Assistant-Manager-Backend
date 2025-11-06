@@ -1,7 +1,7 @@
 ﻿using CsvHelper.Configuration;
-using Fantasy_Football_Assistant_Manager.Models.Supabase;
+using FFOracle.Models.Supabase;
 
-namespace Fantasy_Football_Assistant_Manager.Mappings;
+namespace FFOracle.Mappings;
 
 public class PlayerMap: ClassMap<Player>
 {

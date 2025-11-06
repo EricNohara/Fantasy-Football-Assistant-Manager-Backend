@@ -1,7 +1,7 @@
-﻿using Fantasy_Football_Assistant_Manager.DTOs;
+﻿using FFOracle.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Fantasy_Football_Assistant_Manager.Controllers;
+namespace FFOracle.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

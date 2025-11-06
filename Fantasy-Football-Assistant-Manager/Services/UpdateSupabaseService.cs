@@ -1,8 +1,8 @@
-﻿using Fantasy_Football_Assistant_Manager.Models.Supabase;
-using Fantasy_Football_Assistant_Manager.Utils;
+﻿using FFOracle.Models.Supabase;
+using FFOracle.Utils;
 using Supabase;
 
-namespace Fantasy_Football_Assistant_Manager.Services;
+namespace FFOracle.Services;
 
 public class UpdateSupabaseService
 {

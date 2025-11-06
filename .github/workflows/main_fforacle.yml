@@ -24,10 +24,10 @@ jobs:
           dotnet-version: "8.x"
 
       - name: Build project
-        run: dotnet build Fantasy-Football-Assistant-Manager/Fantasy-Football-Assistant-Manager.csproj --configuration Release
+        run: dotnet build FFOracle/FFOracle.csproj --configuration Release
 
       - name: Publish project
-        run: dotnet publish Fantasy-Football-Assistant-Manager/Fantasy-Football-Assistant-Manager.csproj -c Release -o ./publish
+        run: dotnet publish FFOracle/FFOracle.csproj -c Release -o ./publish
 
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4

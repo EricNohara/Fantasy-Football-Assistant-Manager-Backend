@@ -1,4 +1,4 @@
-﻿namespace Fantasy_Football_Assistant_Manager.Models.Csv;
+﻿namespace FFOracle.Models.Csv;
 
 // class used for parsing the CSV
 public class PlayerStatCsv
