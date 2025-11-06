@@ -1,3 +1,4 @@
+using Fantasy_Football_Assistant_Manager.Services;
 using Supabase;
 //using Supabase.Postgrest.Models;
 
@@ -13,7 +14,7 @@ if (string.IsNullOrEmpty(supabaseUrl) || string.IsNullOrEmpty(supabaseServiceRol
     throw new InvalidOperationException("Supabase configuration is missing! Check appsettings.json or environment variables.");
 }
 
-// Register Supabase clients - one for anon key and one for service role key for privledged operations
+// Register Supabase clients - service role key for privledged operations
 builder.Services.AddSingleton<Client>(sp =>
 {
     var options = new SupabaseOptions { AutoConnectRealtime = true };
@@ -24,7 +25,27 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+//Added this to allow connection to local frontend
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:3000") // your frontend URL
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+// Add http client to nflverseservice for requesting player stats CSV data
+builder.Services.AddHttpClient<NflVerseService>();
+
+// register the ChatGPTService
+builder.Services.AddScoped<ChatGPTService>();
+
 var app = builder.Build();
+
+//enable CORS
+app.UseCors();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -32,6 +53,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+//assign variables for stripe keys. Currently, I do not need them. They're set in preparation for future use.
+var stripeSection = builder.Configuration.GetRequiredSection("Stripe");
+var stripeSecretKey = stripeSection["SecretKey"];
+var stripePublishableKey = stripeSection["PublishableKey"];
+if (string.IsNullOrEmpty(stripeSecretKey))
+{
+    throw new InvalidOperationException("Stripe configuration is missing! Add your keys to appsettings.json.");
+}
+// Set the global default variable for the stripe API key. This makes it usable anywhere in the app.
+Stripe.StripeConfiguration.ApiKey = stripeSecretKey;
+
 
 app.UseHttpsRedirection();
 

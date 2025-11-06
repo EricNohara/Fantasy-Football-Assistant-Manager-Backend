@@ -2,8 +2,10 @@
 using Supabase.Postgrest.Attributes;
 using System.Text.Json.Serialization;
 
-namespace Fantasy_Football_Assistant_Manager.Models;
-public class PlayerStat: BaseModel
+namespace Fantasy_Football_Assistant_Manager.Models.Supabase;
+
+[Table("player_stats")]
+public class PlayerStat : BaseModel
 {
     [PrimaryKey("id", false)]
     [Column("id")]

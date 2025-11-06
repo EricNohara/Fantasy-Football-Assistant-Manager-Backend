@@ -2,17 +2,31 @@
 using Supabase.Postgrest.Attributes;
 using System.Text.Json.Serialization;
 
-namespace Fantasy_Football_Assistant_Manager.Models;
-public class Team: BaseModel
+namespace Fantasy_Football_Assistant_Manager.Models.Supabase;
+
+[Table("teams")]
+public class Team : BaseModel
 {
     [PrimaryKey("id", false)]
     [Column("id")]
     [JsonPropertyName("id")]
-    public Guid Id { get; set; }
+    public string Id { get; set; } = string.Empty;
 
     [Column("name")]
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
+
+    [Column("conference")]
+    [JsonPropertyName("conference")]
+    public string Conference { get; set; } = string.Empty;
+
+    [Column("division")]
+    [JsonPropertyName("division")]
+    public string Division { get; set; } = string.Empty;
+
+    [Column("logo_url")]
+    [JsonPropertyName("logo_url")]
+    public string LogoUrl { get; set; } = string.Empty;
 
     [Column("offensive_stats_id")]
     [JsonPropertyName("offensive_stats_id")]

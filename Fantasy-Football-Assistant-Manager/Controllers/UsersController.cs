@@ -1,5 +1,4 @@
 ﻿using Fantasy_Football_Assistant_Manager.DTOs;
-using Fantasy_Football_Assistant_Manager.Models;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Supabase;
@@ -40,14 +39,14 @@ public class UsersController: ControllerBase
             var userId = Guid.Parse(session.User.Id);
 
             // Insert the new user and their information into users table
-            var user = new Models.User
+            var user = new Models.Supabase.User
             {
                 Id = userId,
                 Email = req.Email,
                 TeamName = req.TeamName
             };
 
-            await supabase.From<Models.User>().Insert(user);
+            await supabase.From<Models.Supabase.User>().Insert(user);
 
             return Ok(new
             {
