@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 namespace Fantasy_Football_Assistant_Manager.Models.Supabase;
 
 // relationship table mapping players to user's rosters
+[Table("team_members")]
 public class TeamMember: BaseModel
 {
     [PrimaryKey("user_id", false)]
