@@ -31,16 +31,74 @@ public class GetPlayersByPositionController : ControllerBase
             // is per-team
             if (position.Equals("DEF"))
             {
-                var teams = await _supabase.From<Team>().Get();
-                var teamDTOs = teams.Models.Select(m => new DTOs.Team
-                {
-                    Id = m.Id,
-                    Name = m.Name,
-                    OffensiveStatsId = m.OffensiveStatsId,
-                    DefensiveStatsId = m.DefensiveStatsId
-                }).ToList();
+                //get each team
+                var teamsRes = await _supabase.From<Team>().Get();
+                var teams = teamsRes.Models.ToList();
+                //for each team, get its stats and create a new teamWithStats DTO
+                var teamWithStatsTasks = teams.Select(async team =>
+                {                  
+                    //get the team stats
+                    var defRes = await _supabase
+                        .From<TeamDefensiveStat>()
+                        .Where(s => s.Id == team.DefensiveStatsId)
+                        .Get();
+                    var offRes = await _supabase
+                        .From<TeamOffensiveStat>()
+                        .Where(s => s.Id == team.OffensiveStatsId)
+                        .Get();
+                    var def = defRes.Model;
+                    var off = offRes.Model;
+                    //Create the full DTO
+                    var teamWithStats = new DTOs.TeamWithStats
+                    {
+                        team = new DTOs.Team
+                        {
+                            Id = team.Id,
+                            Name = team.Name,
+                            OffensiveStatsId = team.OffensiveStatsId,
+                            DefensiveStatsId = team.DefensiveStatsId
+                        },
+                        defStat = new DTOs.TeamDefensiveStat
+                        {
+                            Id = def.Id,
+                            TacklesForLoss = def.TacklesForLoss,
+                            TacklesForLossYards = def.TacklesForLossYards,
+                            FumblesFor = def.FumblesFor,
+                            SacksFor = def.SacksFor,
+                            SackYardsFor = def.SackYardsFor,
+                            InterceptionsFor = def.InterceptionsFor,
+                            InterceptionYardsFor = def.InterceptionYardsFor,
+                            DefTds = def.DefTds,
+                            Safeties = def.Safeties,
+                            PassDefended = def.PassDefended
+                        },
+                        offStat = new DTOs.TeamOffensiveStat
+                        {
+                            Id = off.Id,
+                            Completions = off.Completions,
+                            Attempts = off.Attempts,
+                            PassingYards = off.PassingYards,
+                            PassingTds = off.PassingTds,
+                            PassingInterceptions = off.PassingInterceptions,
+                            SacksAgainst = off.SacksAgainst,
+                            FumblesAgainst = off.FumblesAgainst,
+                            Carries = off.Carries,
+                            RushingYards = off.RushingYards,
+                            RushingTds = off.RushingTds,
+                            Receptions = off.Receptions,
+                            Targets = off.Targets,
+                            ReceivingYards = off.ReceivingYards,
+                            ReceivingTds = off.ReceivingTds
+                        }
+                    };
+                    return teamWithStats;
+                });
+                //since the query that forms the list of DTOs contains multiple async calls,
+                // the program needs to wait for everything to complete before it can
+                // use the results.
+                var teamWithStatsDTOs = (await Task.WhenAll(teamWithStatsTasks)).ToList();
 
-                return Ok(teamDTOs);
+                return Ok(teamWithStatsDTOs);
             } 
             //else, return a list of players of that particular position
             else
