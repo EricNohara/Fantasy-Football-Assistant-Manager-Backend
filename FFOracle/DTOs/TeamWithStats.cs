@@ -1,11 +1,10 @@
-﻿namespace Fantasy_Football_Assistant_Manager.DTOs
+﻿namespace FFOracle.DTOs;
+
+public class TeamWithStats
 {
-    public class TeamWithStats
-    {
-        public required DTOs.Team team {  get; set; }   //team info
+    public required Team team {  get; set; }   //team info
 
-        public required DTOs.TeamDefensiveStat defStat { get; set; }    //defensive stats
-        public required DTOs.TeamOffensiveStat offStat { get; set; }
+    public required TeamDefensiveStat defStat { get; set; }    //defensive stats
+    public required TeamOffensiveStat offStat { get; set; }
 
-    }
 }

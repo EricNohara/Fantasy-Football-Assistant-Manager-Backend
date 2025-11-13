@@ -9,7 +9,7 @@ public class TeamMember
     public Guid UserId { get; set; }
 
     [JsonPropertyName("player_id")]
-    public String PlayerId { get; set; }
+    public string PlayerId { get; set; }
 
     [JsonPropertyName("picked")]
     public Boolean Picked { get; set; } = false;
