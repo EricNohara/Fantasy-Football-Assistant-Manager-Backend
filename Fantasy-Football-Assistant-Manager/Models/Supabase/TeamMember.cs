@@ -16,5 +16,10 @@ public class TeamMember: BaseModel
     [PrimaryKey("player_id", false)]
     [Column("player_id")]
     [JsonPropertyName("player_id")]
-    public Guid PlayerId { get; set; }
+    public String PlayerId { get; set; }
+
+    [Column("picked")]
+    [JsonPropertyName("picked")]
+    public Boolean Picked { get; set; }
+
 }

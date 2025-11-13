@@ -1,4 +1,5 @@
-﻿using Fantasy_Football_Assistant_Manager.Models.Supabase;
+﻿//using Fantasy_Football_Assistant_Manager.DTOs;
+using Fantasy_Football_Assistant_Manager.Models.Supabase;
 using Microsoft.AspNetCore.Mvc;
 using Supabase;
 using Supabase.Postgrest.Responses;
@@ -50,17 +51,17 @@ public class GetUserDataController : ControllerBase
             var userRes = await _supabase.From<User>().Where(x => x.Id == userId).Get();
 
             // map supabase result to dto
-            var m = userRes.Model;
+            var userData = userRes.Model;
 
             var userDTO = new DTOs.User();
-            userDTO.Id = m.Id;
-            userDTO.TeamName = m.TeamName;
-            userDTO.Email = m.Email;
-            userDTO.TokensLeft = m.TokensLeft;
+            userDTO.Id = userData.Id;
+            userDTO.TeamName = userData.TeamName;
+            userDTO.Email = userData.Email;
+            userDTO.TokensLeft = userData.TokensLeft;
             //no need to send the settings entry IDs since these will be queried separately
             
             // fetch score settings and map to dto
-            var scoreRes = await _supabase.From<ScoringSetting>().Where(x => x.Id == m.ScoringSettingsId).Get();
+            var scoreRes = await _supabase.From<ScoringSetting>().Where(x => x.Id == userData.ScoringSettingsId).Get();
             var s = scoreRes.Model;
             var scoreDTO = new DTOs.ScoringSetting();
             scoreDTO.PointsPerReception = s.PointsPerReception;
@@ -70,7 +71,7 @@ public class GetUserDataController : ControllerBase
             scoreDTO.PointsPerTd = s.PointsPerTd;
 
             //fetch roster settings and map to dto
-            var rosterRes = await _supabase.From<RosterSetting>().Where(x => x.Id == m.RosterSettingsId).Get();
+            var rosterRes = await _supabase.From<RosterSetting>().Where(x => x.Id == userData.RosterSettingsId).Get();
             var r = rosterRes.Model;
             var rosterDTO = new DTOs.RosterSetting();
             rosterDTO.KCount = r.KCount;
@@ -83,39 +84,46 @@ public class GetUserDataController : ControllerBase
             rosterDTO.FlexCount = r.FlexCount;
             rosterDTO.TeCount = r.TeCount;
 
-            //fetch list of players on user's team and map to dtos
-            //start by getting all picked player ids
-            var teamIDs = await _supabase.From<TeamMember>().Where(x => x.UserId == m.Id).Get();
-            var playerIds = teamIDs.Models.Select(up => up.PlayerId).Distinct().ToList();   //list of player ids
-            List<DTOs.Player> memberDTOs = new List<DTOs.Player>();   //new list of player dtos
-            if (playerIds.Any())    //as long as this user has picked players...
+            //fetch team member data and map to list of DTOs
+            //start by fetching the list of TeamMember objects for this user
+            var membersRes = await _supabase
+                .From<Models.Supabase.TeamMember>()
+                .Where(x => x.UserId == userData.Id)
+                .Get();
+            var members = membersRes.Models;
+            //Extract a list of just the team member IDs and use it to fetch a list of
+            // player objects for the players on this user's team.
+            var memberIDs = members
+                .Select(m => m.PlayerId)
+                .ToList();
+            var playersRes = await _supabase
+                .From<Player>()
+                .Filter(p => p.Id, Operator.In, memberIDs)
+                .Get();
+            var players = playersRes.Models;
+            //Use a helper method to obtain a list of players with associated stats
+            var playerWithStatsDTOs = await Helper.GetPlayersWithStats(players: players, _supabase: _supabase);
+
+            //Combine the picked fields of the members list with the playerWithStats DTOs
+            var userTeamMemberDTOs = members.Select(m =>
             {
-                //make a new query on the player table for all players with an id in the id list
-                var memberRes = await _supabase
-                    .From<Player>()
-                    .Filter("Id", Operator.In, $"({string.Join(",", playerIds)})")
-                    .Get();
-
-                memberDTOs = memberRes.Models.Select(m => new DTOs.Player
+                var utm = new DTOs.UserTeamMember
                 {
-                    Id = m.Id,
-                    Name = m.Name,
-                    HeadshotUrl = m.HeadshotUrl,
-                    Position = m.Position,
-                    Status = m.Status,
-                    StatusDescription = m.StatusDescription,
-                    TeamId = m.TeamId,
-                    SeasonStatsId = m.SeasonStatsId
-                }).ToList();
-            }
+                    Picked = m.Picked,
+                    Player = playerWithStatsDTOs
+                        .Where(p => p.Player.Id == m.PlayerId.ToString())
+                        .Single()
+                };
+                return utm;
+            }).ToList();
 
-            // Return as anonymous object with Ok
+            //return all user data
             var result = new
             {
                 userDTO,
                 scoreDTO,
                 rosterDTO,
-                memberDTOs
+                userTeamMemberDTOs
             };
             return Ok(result);      
         }
