@@ -24,10 +24,10 @@ jobs:
           dotnet-version: "8.x"
 
       - name: Build project
-        run: dotnet build Fantasy-Football-Assistant-Manager/Fantasy-Football-Assistant-Manager.csproj --configuration Release
+        run: dotnet build FFOracle/FFOracle.csproj --configuration Release
 
       - name: Publish project
-        run: dotnet publish Fantasy-Football-Assistant-Manager/Fantasy-Football-Assistant-Manager.csproj -c Release -o ./publish
+        run: dotnet publish FFOracle/FFOracle.csproj -c Release -o ./publish
 
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
@@ -52,9 +52,7 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_3C280D050E0F4243A338A118756AF2E5 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_E6C08C7D922B4E519DEFD6ACD7A93981 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_58AD54B4E954416F8314B16D46FE3B02 }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
