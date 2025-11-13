@@ -16,4 +16,7 @@ public class WeeklyPlayerStat
 
     [JsonPropertyName("player_stats_id")]
     public Guid PlayerStatsId { get; set; }
+
+    [JsonPropertyName("season_start_year")]
+    public int SeasonStartYear {  get; set; }
 }

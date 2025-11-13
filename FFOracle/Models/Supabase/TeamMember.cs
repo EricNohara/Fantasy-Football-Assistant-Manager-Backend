@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 namespace FFOracle.Models.Supabase;
 
 // relationship table mapping players to user's rosters
+[Table("team_members")]
 public class TeamMember: BaseModel
 {
     [PrimaryKey("user_id", false)]
@@ -15,5 +16,10 @@ public class TeamMember: BaseModel
     [PrimaryKey("player_id", false)]
     [Column("player_id")]
     [JsonPropertyName("player_id")]
-    public Guid PlayerId { get; set; }
+    public String PlayerId { get; set; }
+
+    [Column("picked")]
+    [JsonPropertyName("picked")]
+    public Boolean Picked { get; set; }
+
 }
