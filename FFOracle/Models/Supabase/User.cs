@@ -12,21 +12,13 @@ public class User: BaseModel
     [JsonPropertyName("id")]
     public Guid Id { get; set; }
 
-    [Column("team_name")]
-    [JsonPropertyName("team_name")]
-    public string? TeamName { get; set; }
+    [Column("fullname")]
+    [JsonPropertyName("fullname")]
+    public string Fullname {  get; set; } = string.Empty;
 
     [Column("email")]
     [JsonPropertyName("email")]
     public string Email { get; set; } = string.Empty;
-
-    [Column("roster_settings_id")]
-    [JsonPropertyName("roster_settings_id")]
-    public Guid? RosterSettingsId { get; set; }
-
-    [Column("scoring_settings_id")]
-    [JsonPropertyName("scoring_settings_id")]
-    public Guid? ScoringSettingsId { get; set; }
 
     [Column("tokens_left")]
     [JsonPropertyName("tokens_left")]

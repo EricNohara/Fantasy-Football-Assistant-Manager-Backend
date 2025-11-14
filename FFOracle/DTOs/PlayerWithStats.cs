@@ -6,12 +6,12 @@ namespace FFOracle.DTOs;
 public class PlayerWithStats
 {
     [JsonPropertyName("player")]
-    public required Player Player { get; set; }
+    public required DTOs.Player Player { get; set; }
 
     [JsonPropertyName("season_stats")]
-    public required PlayerStat SeasonStat { get; set; }
+    public required DTOs.PlayerStat SeasonStat { get; set; }
 
     [JsonPropertyName("weekly_stats")]
-    public List<PlayerStatWithWeekNum> WeeklyStats { get; set; } = new List<PlayerStatWithWeekNum>();
+    public List<DTOs.PlayerStatWithWeekNum> WeeklyStats { get; set; } = new List<DTOs.PlayerStatWithWeekNum>();
 
 }

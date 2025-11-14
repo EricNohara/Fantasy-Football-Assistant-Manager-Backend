@@ -1,11 +1,12 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace FFOracle.DTOs;
-
-public class UserTeamMember
+namespace FFOracle.DTOs
 {
-    [JsonPropertyName("picked")]
-    public bool Picked { get; set; } = false;
+    public class UserTeamMember
+    {
+        [JsonPropertyName("picked")]
+        public bool Picked { get; set; } = false;
 
-    public required PlayerWithStats Player { get; set; }
+        public required DTOs.PlayerWithStats Player { get; set; }
+    }
 }

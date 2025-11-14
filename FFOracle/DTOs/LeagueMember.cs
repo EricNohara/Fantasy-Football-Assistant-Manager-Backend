@@ -3,13 +3,13 @@ using System.Text.Json.Serialization;
 
 namespace FFOracle.DTOs;
 
-public class TeamMember
+public class LeagueMember
 {
-    [JsonPropertyName("user_id")]
-    public Guid UserId { get; set; }
+    [JsonPropertyName("league_id")]
+    public String LeagueId { get; set; }
 
     [JsonPropertyName("player_id")]
-    public string PlayerId { get; set; }
+    public String PlayerId { get; set; }
 
     [JsonPropertyName("picked")]
     public Boolean Picked { get; set; } = false;
