@@ -22,39 +22,6 @@ public class PlayersController: ControllerBase
         _updateSupabaseService = new UpdateSupabaseService(_nflVerseService, _supabase);
     }
 
-    // ALL PLAYERS ROUTES
-    // GET route for getting all players
-    [HttpGet("all")]
-    public async Task<IActionResult> GetAll()
-    {
-        try
-        {
-            var response = await _supabase
-                .From<Player>()
-                .Get();
-
-            var players = response.Models
-            .Select(p => new DTOs.Player
-            {
-                Id = p.Id,
-                Name = p.Name,
-                HeadshotUrl = p.HeadshotUrl,
-                Position = p.Position,
-                Status = p.Status,
-                StatusDescription = p.StatusDescription,
-                TeamId = p.TeamId,
-                SeasonStatsId = p.SeasonStatsId
-            })
-            .ToList();
-
-            return Ok(players);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Error getting all players: {ex.Message}");
-        }
-    }
-
     // POST route for adding players
     [HttpPost("all")]
     public async Task<IActionResult> PostAll ()
@@ -147,51 +114,6 @@ public class PlayersController: ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, $"Error updating all player information: {ex.Message}");
-        }
-    }
-
-    // SINGLE PLAYER ROUTE
-    [HttpGet("{playerId}")]
-    public async Task<IActionResult> GetSingle(string playerId)
-    {
-        if (string.IsNullOrWhiteSpace(playerId))
-        {
-            return BadRequest(new { error = "Invalid or player id" });
-        }
-
-        try
-        {
-            await _supabase.InitializeAsync();
-
-            var response = await _supabase
-                .From<Player>()
-                .Where(p => p.Id == playerId)
-                .Get();
-
-            var supabasePlayer = response.Models.FirstOrDefault();
-
-            if (supabasePlayer == null)
-            {
-                return NotFound(new { error = $"Player with id {playerId} not found" });
-            }
-
-            var player = new DTOs.Player
-            {
-                Id = supabasePlayer.Id,
-                Name = supabasePlayer.Name,
-                HeadshotUrl = supabasePlayer.HeadshotUrl,
-                Position = supabasePlayer.Position,
-                Status = supabasePlayer.Status,
-                StatusDescription = supabasePlayer.StatusDescription,
-                TeamId = supabasePlayer.TeamId,
-                SeasonStatsId = supabasePlayer.SeasonStatsId
-            };
-
-            return Ok(player);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Error getting player with Id {playerId}: {ex.Message}");
         }
     }
 }

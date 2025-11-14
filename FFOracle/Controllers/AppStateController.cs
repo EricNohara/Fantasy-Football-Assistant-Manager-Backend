@@ -14,6 +14,7 @@ public class AppStateController : ControllerBase
         _supabase = supabase;
     }
 
+    // PUT route for incrementing the current week in app state by scheduler
     [HttpPut("increment")]
     public async Task<IActionResult> UpdateAppState()
     {

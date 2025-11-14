@@ -1,5 +1,6 @@
 ﻿using FFOracle.Models.Supabase;
 using FFOracle.Utils;
+using Square;
 using Supabase;
 
 namespace FFOracle.Services;
@@ -25,23 +26,29 @@ public class UpdateSupabaseService
             throw new Exception("No season stats found to insert.");
         }
 
-        // Get the most latest week's data stored in the db
-        var latestWeekResponse = await _supabase
-            .From<WeeklyPlayerStat>()
-            .Select("week")
-            .Order("week", Supabase.Postgrest.Constants.Ordering.Descending)
-            .Limit(1)
+        // Fetch the current_week from app_settings table
+        var appStateResponse = await _supabase
+            .From<AppState>()
+            .Select("current_week")
             .Get();
 
-        // set the week to 0 if there are none in the db currently
-        var latestWeek = latestWeekResponse.Models.FirstOrDefault()?.Week ?? 0;
+        int currentWeek = appStateResponse.Models.FirstOrDefault()?.CurrentWeek ?? 1;
 
-        // find the latest week in new data
-        int newLatestWeek = weeklyStats.Max(s => s.Week);
+        // Compute the week range: last 3 completed weeks
+        int startWeek = Math.Max(currentWeek - 3, 1);
+        int endWeek = Math.Max(currentWeek - 1, 1);
 
-        // only insert the last 3 weeks
+        // Fetch all existing players from the players table
+        var existingPlayersResponse = await _supabase
+            .From<Player>()
+            .Select("id")
+            .Get();
+
+        var existingPlayerIds = existingPlayersResponse.Models.Select(p => p.Id).ToHashSet();
+
+        // Filter stats to only include existing players and new weeks
         var newStats = weeklyStats
-            .Where(s => s.Week > latestWeek)
+            .Where(s => s.Week >= startWeek && s.Week <= endWeek && existingPlayerIds.Contains(s.PlayerId))
             .ToList();
 
         // add new stats if they exist
@@ -112,13 +119,10 @@ public class UpdateSupabaseService
                 .Insert(weeklyPlayerStats);
         }
 
-        // find the range of the last 3 weeks
-        int startWeek = Math.Max(newLatestWeek - 2, 1);
-
         // delete all old weekly stats
         await _supabase.Rpc("delete_old_week_stats", new { min_week = startWeek });
 
-        return (startWeek, newLatestWeek);
+        return (startWeek, endWeek);
     }
 
     // update all player's season stats
@@ -145,37 +149,39 @@ public class UpdateSupabaseService
             .ToDictionary(p => p.Id, p => p.SeasonStatsId.Value);
 
         // Build list of updates
-        var updates = seasonStats.Select(s => new
-        {
-            season_stats_id = playerStatMap[s.PlayerId],
-            completions = ControllerHelpers.NullIfZero(s.Completions),
-            passing_attempts = ControllerHelpers.NullIfZero(s.PassingAttempts),
-            passing_yards = ControllerHelpers.NullIfZero(s.PassingYards),
-            passing_tds = ControllerHelpers.NullIfZero(s.PassingTds),
-            interceptions_against = ControllerHelpers.NullIfZero(s.InterceptionsAgainst),
-            sacks_against = ControllerHelpers.NullIfZero(s.SacksAgainst),
-            fumbles_against = ControllerHelpers.NullIfZero(s.FumblesAgainst),
-            passing_first_downs = ControllerHelpers.NullIfZero(s.PassingFirstDowns),
-            passing_epa = ControllerHelpers.NullIfZero(s.PassingEpa),
-            carries = ControllerHelpers.NullIfZero(s.Carries),
-            rushing_yards = ControllerHelpers.NullIfZero(s.RushingYards),
-            rushing_tds = ControllerHelpers.NullIfZero(s.RushingTds),
-            rushing_first_downs = ControllerHelpers.NullIfZero(s.RushingFirstDowns),
-            rushing_epa = ControllerHelpers.NullIfZero(s.RushingEpa),
-            receptions = ControllerHelpers.NullIfZero(s.Receptions),
-            targets = ControllerHelpers.NullIfZero(s.Targets),
-            receiving_yards = ControllerHelpers.NullIfZero(s.ReceivingYards),
-            receiving_tds = ControllerHelpers.NullIfZero(s.ReceivingTds),
-            receiving_first_downs = ControllerHelpers.NullIfZero(s.ReceivingFirstDowns),
-            receiving_epa = ControllerHelpers.NullIfZero(s.ReceivingEpa),
-            fg_made_list = s.FgMadeList,
-            fg_missed_list = s.FgMissedList,
-            fg_blocked_list = s.FgBlockedList,
-            pat_attempts = ControllerHelpers.NullIfZero(s.PadAttempts),
-            pat_percent = ControllerHelpers.NullIfZero(s.PatPercent),
-            fantasy_points = s.FantasyPoints,
-            fantasy_points_ppr = s.FantasyPointsPpr
-        }).ToList();
+        var updates = seasonStats
+            .Where(s => playerStatMap.ContainsKey(s.PlayerId))
+            .Select(s => new
+            {
+                season_stats_id = playerStatMap[s.PlayerId],
+                completions = ControllerHelpers.NullIfZero(s.Completions),
+                passing_attempts = ControllerHelpers.NullIfZero(s.PassingAttempts),
+                passing_yards = ControllerHelpers.NullIfZero(s.PassingYards),
+                passing_tds = ControllerHelpers.NullIfZero(s.PassingTds),
+                interceptions_against = ControllerHelpers.NullIfZero(s.InterceptionsAgainst),
+                sacks_against = ControllerHelpers.NullIfZero(s.SacksAgainst),
+                fumbles_against = ControllerHelpers.NullIfZero(s.FumblesAgainst),
+                passing_first_downs = ControllerHelpers.NullIfZero(s.PassingFirstDowns),
+                passing_epa = ControllerHelpers.NullIfZero(s.PassingEpa),
+                carries = ControllerHelpers.NullIfZero(s.Carries),
+                rushing_yards = ControllerHelpers.NullIfZero(s.RushingYards),
+                rushing_tds = ControllerHelpers.NullIfZero(s.RushingTds),
+                rushing_first_downs = ControllerHelpers.NullIfZero(s.RushingFirstDowns),
+                rushing_epa = ControllerHelpers.NullIfZero(s.RushingEpa),
+                receptions = ControllerHelpers.NullIfZero(s.Receptions),
+                targets = ControllerHelpers.NullIfZero(s.Targets),
+                receiving_yards = ControllerHelpers.NullIfZero(s.ReceivingYards),
+                receiving_tds = ControllerHelpers.NullIfZero(s.ReceivingTds),
+                receiving_first_downs = ControllerHelpers.NullIfZero(s.ReceivingFirstDowns),
+                receiving_epa = ControllerHelpers.NullIfZero(s.ReceivingEpa),
+                fg_made_list = s.FgMadeList,
+                fg_missed_list = s.FgMissedList,
+                fg_blocked_list = s.FgBlockedList,
+                pat_attempts = ControllerHelpers.NullIfZero(s.PadAttempts),
+                pat_percent = ControllerHelpers.NullIfZero(s.PatPercent),
+                fantasy_points = s.FantasyPoints,
+                fantasy_points_ppr = s.FantasyPointsPpr
+            }).ToList();
 
         // Call RPC to update all at once
         await _supabase.Rpc("batch_update_player_season_stats", new { updates });
@@ -408,4 +414,117 @@ public class UpdateSupabaseService
 
         return;
     }
+
+    // Add new players from the CSV/service that do NOT exist in the database - do this for new players in their DB appearing
+    public async Task AddNewPlayersAsync()
+    {
+        // fetch all players from nfl verse service
+        var allPlayersFromService = await _nflVerseService.GetAllOffensivePlayersAsync();
+        if (allPlayersFromService == null || !allPlayersFromService.Any())
+        {
+            throw new Exception("No players found to insert.");
+        }
+
+        // fetch all existing players from Supabase
+        var existingPlayersResponse = await _supabase
+            .From<Player>()
+            .Select("id")
+            .Get();
+
+        var existingPlayerIds = existingPlayersResponse.Models
+            .Select(p => p.Id)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        // filter out players that already exist
+        var newPlayers = allPlayersFromService
+            .Where(p => !existingPlayerIds.Contains(p.Id))
+            .ToList();
+
+        // nothing new to add
+        if (!newPlayers.Any())
+        {
+            return;
+        }
+
+        // optionally, fetch detailed player info for these new players
+        var currentSeason = (await ControllerHelpers.GetCurrentSeasonAndWeekAsync(_supabase)).Season;
+        var playerInfo = await _nflVerseService.GetAllPlayerInformationAsync(currentSeason);
+        var playerInfoLookup = playerInfo.ToDictionary(p => p.Id, StringComparer.OrdinalIgnoreCase);
+
+        // create season stats for each new player
+        var playerStatsToInsert = newPlayers
+            .Select(p =>
+            {
+                var statId = Guid.NewGuid();
+                return new PlayerStat
+                {
+                    Id = statId,
+                    // initialize all numeric fields to null
+                    Completions = null,
+                    PassingAttempts = null,
+                    PassingYards = null,
+                    PassingTds = null,
+                    InterceptionsAgainst = null,
+                    SacksAgainst = null,
+                    FumblesAgainst = null,
+                    PassingFirstDowns = null,
+                    PassingEpa = null,
+                    Carries = null,
+                    RushingYards = null,
+                    RushingTds = null,
+                    RushingFirstDowns = null,
+                    RushingEpa = null,
+                    Receptions = null,
+                    Targets = null,
+                    ReceivingYards = null,
+                    ReceivingTds = null,
+                    ReceivingFirstDowns = null,
+                    ReceivingEpa = null,
+                    FgMadeList = null,
+                    FgMissedList = null,
+                    FgBlockedList = null,
+                    PadAttempts = null,
+                    PatPercent = null,
+                    FantasyPoints = null,
+                    FantasyPointsPpr = null
+                };
+            })
+            .ToList();
+
+        // insert season stats into Supabase
+        await _supabase
+            .From<PlayerStat>()
+            .Insert(playerStatsToInsert);
+
+        // map player ID to their season stat ID
+        var statIdMap = playerStatsToInsert
+            .Select((stat, index) => new { PlayerId = newPlayers[index].Id, StatId = stat.Id })
+            .ToDictionary(x => x.PlayerId, x => x.StatId);
+
+        // create new players with SeasonStatsId
+        var playersToInsert = newPlayers
+            .Select(p =>
+            {
+                playerInfoLookup.TryGetValue(p.Id, out var info);
+
+                return new Player
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    HeadshotUrl = p.HeadshotUrl,
+                    Position = p.Position,
+                    Status = info?.Status,
+                    StatusDescription = info?.ShortDescription,
+                    TeamId = info?.LatestTeam,
+                    SeasonStatsId = statIdMap[p.Id]  // link to the newly created stat
+                };
+            })
+            .ToList();
+
+        // insert new players into Supabase
+        await _supabase
+            .From<Player>()
+            .Insert(playersToInsert);
+    }
+
 }

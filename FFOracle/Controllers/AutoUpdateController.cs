@@ -26,6 +26,9 @@ public class AutoUpdateController: ControllerBase
     {
         try
         {
+            // add any new players recently added to nflverse
+            await _updateSupabaseService.AddNewPlayersAsync();
+
             // update weekly player stats (add the new week)
             await _updateSupabaseService.UpdateStatsFromLastThreeWeeksAsync();
 
