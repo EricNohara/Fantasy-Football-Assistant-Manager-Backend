@@ -1,10 +1,11 @@
-﻿namespace FFOracle.DTOs;
-
-public class TeamWithStats
+﻿namespace FFOracle.DTOs
 {
-    public required Team team {  get; set; }   //team info
+    public class TeamWithStats
+    {
+        public required DTOs.Team team {  get; set; }   //team info
 
-    public required TeamDefensiveStat defStat { get; set; }    //defensive stats
-    public required TeamOffensiveStat offStat { get; set; }
+        public required DTOs.TeamDefensiveStat defStat { get; set; }    //defensive stats
+        public required DTOs.TeamOffensiveStat offStat { get; set; }
 
+    }
 }

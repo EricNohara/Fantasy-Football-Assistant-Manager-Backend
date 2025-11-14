@@ -50,10 +50,7 @@ public class SupaBaseController : ControllerBase
                     var dtos = res.Models.Select(m => new DTOs.User
                     {
                         Id = m.Id,
-                        TeamName = m.TeamName,
                         Email = m.Email,
-                        RosterSettingsId = m.RosterSettingsId,
-                        ScoringSettingsId = m.ScoringSettingsId,
                         TokensLeft = m.TokensLeft,
                     }).ToList();
                     // Return as anonymous object to ensure clean serialization
@@ -122,16 +119,7 @@ public class SupaBaseController : ControllerBase
                     }).ToList();
                     return new JsonResult(dtos);
                 }
-                case "team_members":
-                {
-                    var res = await _supabase.From<TeamMember>().Get();
-                    var dtos = res.Models.Select(m => new DTOs.TeamMember
-                    {
-                        UserId = m.UserId,
-                        PlayerId = m.PlayerId
-                    }).ToList();
-                    return new JsonResult(dtos);
-                }
+              
                 case "weekly_player_stats":
                 {
                     var res = await _supabase.From<WeeklyPlayerStat>().Get();

@@ -5,13 +5,13 @@ using System.Text.Json.Serialization;
 namespace FFOracle.Models.Supabase;
 
 // relationship table mapping players to user's rosters
-[Table("team_members")]
-public class TeamMember: BaseModel
+[Table("league_members")]
+public class LeagueMember: BaseModel
 {
-    [PrimaryKey("user_id", false)]
-    [Column("user_id")]
-    [JsonPropertyName("user_id")]
-    public Guid UserId { get; set; }
+    [PrimaryKey("league_id", false)]
+    [Column("league_id")]
+    [JsonPropertyName("league_id")]
+    public Guid LeagueId { get; set; }
 
     [PrimaryKey("player_id", false)]
     [Column("player_id")]

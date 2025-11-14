@@ -39,8 +39,7 @@ public class UsersController: ControllerBase
             var user = new Models.Supabase.User
             {
                 Id = userId,
-                Email = req.Email,
-                TeamName = req.TeamName
+                Email = req.Email
             };
 
             await _supabase.From<Models.Supabase.User>().Insert(user);
