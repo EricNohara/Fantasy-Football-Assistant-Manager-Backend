@@ -10,7 +10,7 @@ public class UserLeague : BaseModel
     [PrimaryKey("id", false)]
     [Column("id")]
     [JsonPropertyName("id")]
-    public string Id { get; set; } = string.Empty;
+    public Guid Id { get; set; }
 
     [Column("name")]
     [JsonPropertyName("name")]
@@ -18,13 +18,13 @@ public class UserLeague : BaseModel
 
     [Column("user_id")]
     [JsonPropertyName("user_id")]
-    public string UserID { get; set; } = string.Empty;
+    public Guid UserID { get; set; }
 
     [Column("scoring_settings_id")]
     [JsonPropertyName("scoring_settings_id")]
-    public string ScoringSettingsID { get; set; } = string.Empty;
+    public Guid ScoringSettingsID { get; set; }
 
     [Column("roster_settings_id")]
     [JsonPropertyName("roster_settings_id")]
-    public string RosterSettingsID { get; set; } = string.Empty;
+    public Guid RosterSettingsID { get; set; }
 }

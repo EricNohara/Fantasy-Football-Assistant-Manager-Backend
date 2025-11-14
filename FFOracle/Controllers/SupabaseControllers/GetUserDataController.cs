@@ -56,76 +56,112 @@ public class GetUserDataController : ControllerBase
 
             var userDTO = new DTOs.User();
             userDTO.Id = userData.Id;
-            userDTO.TeamName = userData.TeamName;
+            userDTO.Fullname = userData.Fullname;
             userDTO.Email = userData.Email;
             userDTO.TokensLeft = userData.TokensLeft;
-            //no need to send the settings entry IDs since these will be queried separately
 
-            // fetch score settings and map to dto
-            var scoreRes = await _supabase.From<ScoringSetting>().Where(x => x.Id == userData.ScoringSettingsId).Get();
-            var s = scoreRes.Model;
-            var scoreDTO = new DTOs.ScoringSetting();
-            scoreDTO.PointsPerReception = s.PointsPerReception;
-            scoreDTO.PointsPerReceptionYard = s.PointsPerReceptionYard;
-            scoreDTO.PointsPerRushingYard = s.PointsPerRushingYard;
-            scoreDTO.PointsPerPassingYard = s.PointsPerPassingYard;
-            scoreDTO.PointsPerTd = s.PointsPerTd;
+            //fetch each of this user's leagues and their associated data, then map them to
+            // DTOs
 
-            //fetch roster settings and map to dto
-            var rosterRes = await _supabase.From<RosterSetting>().Where(x => x.Id == userData.RosterSettingsId).Get();
-            var r = rosterRes.Model;
-            var rosterDTO = new DTOs.RosterSetting();
-            rosterDTO.KCount = r.KCount;
-            rosterDTO.WrCount = r.WrCount;
-            rosterDTO.IrCount = r.IrCount;
-            rosterDTO.QbCount = r.QbCount;
-            rosterDTO.RbCount = r.RbCount;
-            rosterDTO.BenchCount = r.BenchCount;
-            rosterDTO.DefCount = r.DefCount;
-            rosterDTO.FlexCount = r.FlexCount;
-            rosterDTO.TeCount = r.TeCount;
-
-            //fetch team member data and map to list of DTOs
-            //start by fetching the list of TeamMember objects for this user
-            var membersRes = await _supabase
-                .From<Models.Supabase.TeamMember>()
-                .Where(x => x.UserId == userData.Id)
+            //first, obtain list of this user's leagues
+            var leaguesRes = await _supabase
+                .From<UserLeague>()
+                .Where(x => x.UserID == userData.Id)
                 .Get();
-            var members = membersRes.Models;
-            //Extract a list of just the team member IDs and use it to fetch a list of
-            // player objects for the players on this user's team.
-            var memberIDs = members
-                .Select(m => m.PlayerId)
-                .ToList();
-            var playersRes = await _supabase
-                .From<Player>()
-                .Filter(p => p.Id, Operator.In, memberIDs)
-                .Get();
-            var players = playersRes.Models;
-            //Use a helper method to obtain a list of players with associated stats
-            var playerWithStatsDTOs = await Helper.GetPlayersWithStats(players: players, _supabase: _supabase);
+            var leagues = leaguesRes.Models.ToList();
 
-            //Combine the picked fields of the members list with the playerWithStats DTOs
-            var userTeamMemberDTOs = members.Select(m =>
+            //for each league, obtain the league info and store in DTO list
+            var leaguesWithInfo = new List<DTOs.UserLeagueWithSettingsAndPlayers>();
+            //obtain the lists of roster settings and scoring settings in advance to
+            // minimize supabase queries
+            var scoreSettingIds = leagues.Select(x => x.ScoringSettingsID).ToList(); //used to narrow down settings pulled from supabase
+            var rosterSettingIds = leagues.Select(x => x.RosterSettingsID).ToList(); //used for same purpose as scoreSettingIds
+            var scoreSettingsRes = await _supabase
+                .From<ScoringSetting>()
+                .Filter(s => s.Id, Operator.In, scoreSettingIds)
+                .Get();
+            var scoreSettings = scoreSettingsRes.Models.ToList();
+            var rosterSettingsRes = await _supabase
+                .From<RosterSetting>()
+                .Filter(s => s.Id, Operator.In, rosterSettingIds)
+                .Get();
+            var rosterSettings = rosterSettingsRes.Models.ToList();
+            foreach ( var league in leagues)
             {
-                var utm = new DTOs.UserTeamMember
+                var leagueDTO = new DTOs.UserLeagueWithSettingsAndPlayers();
+                leagueDTO.League = new DTOs.UserLeague
                 {
-                    Picked = m.Picked,
-                    Player = playerWithStatsDTOs
-                        .Where(p => p.Player.Id == m.PlayerId.ToString())
-                        .Single()
+                    Id = league.Id,
+                    Name = league.Name,
+                    UserId = league.UserID,
+                    ScoringSettingsId = league.ScoringSettingsID,
+                    RosterSettingsId = league.RosterSettingsID
                 };
-                return utm;
-            }).ToList();
+                //get roster setting
+                var rosterSetting = rosterSettings
+                    .Where(s => s.Id == league.RosterSettingsID)
+                    .Single();
+                leagueDTO.RosterSetting = new DTOs.RosterSetting
+                {
+                    KCount = rosterSetting.KCount,
+                    WrCount = rosterSetting.WrCount,
+                    IrCount = rosterSetting.IrCount,
+                    QbCount = rosterSetting.QbCount,
+                    RbCount = rosterSetting.RbCount,
+                    BenchCount = rosterSetting.BenchCount,
+                    DefCount = rosterSetting.DefCount,
+                    FlexCount = rosterSetting.FlexCount,
+                    TeCount = rosterSetting.TeCount
+                };
+                //get score setting
+                var scoreSetting = scoreSettings
+                    .Where(s => s.Id == league.ScoringSettingsID)
+                    .Single();
+                leagueDTO.ScoringSetting = new DTOs.ScoringSetting
+                {
+                    PointsPerReception = scoreSetting.PointsPerReception,
+                    PointsPerReceptionYard = scoreSetting.PointsPerReceptionYard,
+                    PointsPerRushingYard = scoreSetting.PointsPerRushingYard,
+                    PointsPerPassingYard = scoreSetting.PointsPerPassingYard,
+                    PointsPerTd = scoreSetting.PointsPerTd
+                };
+                //get list of players in this league
+                var membersRes = await _supabase    //get the LeagueMember objects first
+                    .From<LeagueMember>()
+                    .Where(m => m.LeagueId == league.Id)
+                    .Get();
+                var members = membersRes.Models.ToList();
+                var memberIds = members.Select(m => m.PlayerId).ToList();
+                var playersRes = await _supabase    //use LeagueMember player ids to get the players
+                    .From<Player>()
+                    .Filter(p => p.Id, Operator.In, memberIds)
+                    .Get();
+                var players = playersRes.Models.ToList();
+                //use helper function to link each player to their stats
+                var playerWithStatsDTOs = await Helper.GetPlayersWithStats(players, _supabase);
+                //Link each player to their picked status for this league
+                var userLeagueMemberDTOs = members.Select(m =>
+                {
+                    var ulm = new DTOs.UserLeagueMember
+                    {
+                        Picked = m.Picked,
+                        Player = playerWithStatsDTOs
+                            .Where(p => p.Player.Id == m.PlayerId)
+                            .Single()
+                    };
+                    return ulm;
+                }).ToList();
+                leagueDTO.Players = userLeagueMemberDTOs;
+                leaguesWithInfo.Add(leagueDTO); //finally, add to the list of leagues
+            }
 
-            //return all user data
+            //Return the user info with the list of that user's leagues
             var result = new
             {
                 userDTO,
-                scoreDTO,
-                rosterDTO,
-                userTeamMemberDTOs
+                leaguesWithInfo
             };
+
             return Ok(result);
         }
         catch (Exception ex)

@@ -5,17 +5,17 @@ namespace FFOracle.DTOs;
 public class UserLeague
 {
     [JsonPropertyName("id")]
-    public string Id { get; set; } = string.Empty;
+    public Guid Id { get; set; }
 
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
 
     [JsonPropertyName("user_id")]
-    public string UserId { get; set; } = string.Empty;
+    public Guid UserId { get; set; }
 
     [JsonPropertyName("scoring_settings_id")]
-    public string ScoringSettingsId { get; set; } = string.Empty;
+    public Guid ScoringSettingsId { get; set; }
 
     [JsonPropertyName("roster_settings_id")]
-    public string RosterSettingsId { get; set; } = string.Empty;
+    public Guid RosterSettingsId { get; set; }
 }

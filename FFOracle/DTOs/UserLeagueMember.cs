@@ -2,7 +2,7 @@
 
 namespace FFOracle.DTOs
 {
-    public class UserTeamMember
+    public class UserLeagueMember
     {
         [JsonPropertyName("picked")]
         public bool Picked { get; set; } = false;
