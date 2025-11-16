@@ -12,6 +12,9 @@ public class UserLeagueFlexData
 
     [JsonPropertyName("weeklyStats")]
     public List<FlexWeeklyStatsDto> WeeklyStats { get; set; }
+
+    [JsonPropertyName("opponent")]
+    public OpponentDto Opponent { get; set; }
 }
 
 public class FlexStatsDto

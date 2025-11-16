@@ -12,6 +12,9 @@ public class UserLeagueKData
 
     [JsonPropertyName("weeklyStats")]
     public List<KWeeklyStatsDto> WeeklyStats { get; set; }
+
+    [JsonPropertyName("opponent")]
+    public OpponentDto Opponent { get; set; }
 }
 
 public class KStatsDto

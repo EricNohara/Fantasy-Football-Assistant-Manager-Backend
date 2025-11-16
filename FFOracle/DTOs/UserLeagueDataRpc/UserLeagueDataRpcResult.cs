@@ -27,6 +27,24 @@ public class PlayerDto
 
     [JsonPropertyName("weeklyStats")]
     public List<WeeklyStatsDto> WeeklyStats { get; set; }
+
+    [JsonPropertyName("opponent")]
+    public OpponentDto Opponent { get; set; }
+}
+
+public class OpponentDto
+{
+    [JsonPropertyName("team")]
+    public OpponentTeamDto Team { get; set; }
+
+    [JsonPropertyName("defensiveStats")]
+    public DefenseSeasonStatsDto DefensiveStats { get; set; }
+}
+
+public class OpponentTeamDto
+{
+    [JsonPropertyName("id")] public string Id { get; set; }
+    [JsonPropertyName("name")] public string Name { get; set; }
 }
 
 public class PlayerInfoDto

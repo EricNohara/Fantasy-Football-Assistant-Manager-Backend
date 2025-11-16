@@ -12,6 +12,9 @@ public class UserLeagueQBData
 
     [JsonPropertyName("weeklyStats")]
     public List<QBWeeklyStatsDto> WeeklyStats { get; set; }
+
+    [JsonPropertyName("opponent")]
+    public OpponentDto Opponent { get; set; }
 }
 
 public class QBStatsDto
