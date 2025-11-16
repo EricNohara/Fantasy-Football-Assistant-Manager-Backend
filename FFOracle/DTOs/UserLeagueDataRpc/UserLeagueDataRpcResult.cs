@@ -7,6 +7,9 @@ public class UserLeagueDataRpcResult
     [JsonPropertyName("players")]
     public List<PlayerDto> Players { get; set; }
 
+    [JsonPropertyName("defenses")]
+    public List<DefenseDto> Defenses { get; set; }
+
     [JsonPropertyName("rosterSettings")]
     public RosterSettingsDto RosterSettings { get; set; }
 
@@ -174,4 +177,35 @@ public class ScoringSettingsDto
     [JsonPropertyName("points_per_passing_yard")] public double PointsPerPassingYard { get; set; }
     [JsonPropertyName("points_per_rushing_yard")] public double PointsPerRushingYard { get; set; }
     [JsonPropertyName("points_per_reception_yard")] public double PointsPerReceptionYard { get; set; }
+}
+
+public class DefenseDto
+{
+    [JsonPropertyName("team")]
+    public DefenseTeamInfoDto Team { get; set; }
+
+    [JsonPropertyName("seasonStats")]
+    public DefenseSeasonStatsDto SeasonStats { get; set; }
+}
+
+public class DefenseTeamInfoDto
+{
+    [JsonPropertyName("id")] public string Id { get; set; }
+    [JsonPropertyName("name")] public string Name { get; set; }
+    [JsonPropertyName("conference")] public string Conference { get; set; }
+    [JsonPropertyName("division")] public string Division { get; set; }
+}
+
+public class DefenseSeasonStatsDto
+{
+    [JsonPropertyName("tackles_for_loss")] public int? TacklesForLoss { get; set; }
+    [JsonPropertyName("tackles_for_loss_yards")] public int? TacklesForLossYards { get; set; }
+    [JsonPropertyName("fumbles_for")] public int? FumblesFor { get; set; }
+    [JsonPropertyName("sacks_for")] public int? SacksFor { get; set; }
+    [JsonPropertyName("sack_yards_for")] public int? SackYardsFor { get; set; }
+    [JsonPropertyName("interceptions_for")] public int? InterceptionsFor { get; set; }
+    [JsonPropertyName("interception_yards_for")] public int? InterceptionYardsFor { get; set; }
+    [JsonPropertyName("def_tds")] public int? DefensiveTouchdowns { get; set; }
+    [JsonPropertyName("safeties")] public int? Safeties { get; set; }
+    [JsonPropertyName("pass_defended")] public int? PassDefended { get; set; }
 }

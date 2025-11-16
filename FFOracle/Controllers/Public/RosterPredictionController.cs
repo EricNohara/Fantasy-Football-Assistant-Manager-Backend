@@ -110,6 +110,18 @@ public class RosterPredictionController: ControllerBase
                 })
                 .ToList();
 
+            var defList = leagueData.Defenses?
+                .Select(d =>
+                {
+                    var json = JsonSerializer.Serialize(
+                        d,
+                        new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull }
+                    );
+
+                    return JsonSerializer.Deserialize<DefenseDto>(json);
+                })
+                .ToList() ?? new List<DefenseDto>();
+
             // aggregate pruned data by position
             var rosterByPosition = new
             {
@@ -118,6 +130,7 @@ public class RosterPredictionController: ControllerBase
                 Wr = wrList,
                 Te = teList,
                 K = kList,
+                Def = defList
             };
 
             // return for now - testing
