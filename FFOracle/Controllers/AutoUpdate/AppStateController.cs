@@ -1,7 +1,7 @@
 ﻿using FFOracle.Models.Supabase;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FFOracle.Controllers;
+namespace FFOracle.Controllers.AutoUpdate;
 
 [ApiController]
 [Route("api/[controller]")]

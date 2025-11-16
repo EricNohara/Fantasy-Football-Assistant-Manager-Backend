@@ -4,7 +4,7 @@ using FFOracle.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Supabase;
 
-namespace FFOracle.Controllers;
+namespace FFOracle.Controllers.Internal;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -92,7 +92,7 @@ public class PlayerSeasonStatController: ControllerBase
                         FgMadeList = p.FgMadeList,
                         FgMissedList = p.FgMissedList,
                         FgBlockedList = p.FgBlockedList,
-                        PadAttempts = ControllerHelpers.NullIfZero(p.PadAttempts),
+                        PatAttempts = ControllerHelpers.NullIfZero(p.PadAttempts),
                         PatPercent = ControllerHelpers.NullIfZero(p.PatPercent),
                         FantasyPoints = p.FantasyPoints,
                         FantasyPointsPpr = p.FantasyPointsPpr
