@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FFOracle.Services;
+using Microsoft.AspNetCore.Mvc;
 using Supabase;
 using System.Text.Json;
+
 
 //A controller to retrieve all data specific to a certain user
 //Based on the SupeBaseController code used for our test app
@@ -12,10 +14,12 @@ namespace FFOracle.Controllers.SupabaseControllers;
 public class GetPlayersByPositionController : ControllerBase
 {
     private readonly Client _supabase;
+    private readonly SupabaseAuthService _authService;
 
-    public GetPlayersByPositionController(Client supabase)
+    public GetPlayersByPositionController(Client supabase, SupabaseAuthService authService)
     {
         _supabase = supabase;
+        _authService = authService;
     }
 
     // Read-only endpoint to fetch all players of a certain position.
@@ -25,6 +29,13 @@ public class GetPlayersByPositionController : ControllerBase
     {
         try
         {
+            // authorize the user
+            var userId = await _authService.AuthorizeUser(Request);
+            if (userId == Guid.Empty)
+            {
+                return Unauthorized("Invalid token");
+            }
+
             //if the defense has been requested, return a list of teams since defense
             // is per-team
             if (position.Equals("DEF"))

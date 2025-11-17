@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FFOracle.Services;
+using Microsoft.AspNetCore.Mvc;
 using Supabase;
 using System.Text.Json;
 
@@ -12,10 +13,12 @@ namespace FFOracle.Controllers.SupabaseControllers;
 public class GetUserDataController : ControllerBase
 {
     private readonly Client _supabase;
+    private readonly SupabaseAuthService _authService;
 
-    public GetUserDataController(Client supabase)
+    public GetUserDataController(Client supabase, SupabaseAuthService authService)
     {
         _supabase = supabase;
+        _authService = authService;
     }
 
     // Read-only endpoint to fetch all user data: account info, settings, team
@@ -25,19 +28,7 @@ public class GetUserDataController : ControllerBase
         try
         {
             // get the token from the Authorization header
-            var authHeader = Request.Headers["Authorization"].ToString();
-            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
-            {
-                return Unauthorized("Missing or invalid token");
-            }
-            var accessToken = authHeader.Substring("Bearer ".Length);
-            // verify the token with Supabase
-            var user = await _supabase.Auth.GetUser(accessToken);
-            if (user == null)
-            {
-                return Unauthorized("Invalid token");
-            }
-            var userId = Guid.Parse(user.Id);
+            var userId = await _authService.AuthorizeUser(Request);
             if (userId == Guid.Empty)
             {
                 return Unauthorized("Invalid token");
