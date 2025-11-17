@@ -64,4 +64,29 @@ public class UsersController: ControllerBase
             return StatusCode(500, $"Error creating user: {ex.Message}");
         }
     }
-}
+
+    // DELETE
+    [HttpDelete]
+    public async Task<IActionResult> Delete()
+    {
+        try
+        {
+            var userId = await _authService.AuthorizeUser(Request);
+            if (userId == Guid.Empty)
+            {
+                return Unauthorized("Invalid token");
+            }
+
+            // delete the user from public db
+            await _supabase
+                .From<Models.Supabase.User>()
+                .Where(u => u.Id == userId)
+                .Delete();
+
+            return Ok(new { message = "User deleted successfully" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error deleting user: {ex.Message}");
+        }
+    }
