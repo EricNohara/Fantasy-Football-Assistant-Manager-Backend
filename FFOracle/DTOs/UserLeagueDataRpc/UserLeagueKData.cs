@@ -15,6 +15,9 @@ public class UserLeagueKData
 
     [JsonPropertyName("opponent")]
     public OpponentDto Opponent { get; set; }
+
+    [JsonPropertyName("game")]
+    public GameDto Game { get; set; }
 }
 
 public class KStatsDto

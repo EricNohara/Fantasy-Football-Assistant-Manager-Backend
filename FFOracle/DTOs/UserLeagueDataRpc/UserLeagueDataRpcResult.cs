@@ -30,6 +30,9 @@ public class PlayerDto
 
     [JsonPropertyName("opponent")]
     public OpponentDto Opponent { get; set; }
+
+    [JsonPropertyName("game")]
+    public GameDto Game { get; set; }
 }
 
 public class OpponentDto
@@ -207,6 +210,9 @@ public class DefenseDto
 
     [JsonPropertyName("opponent")]
     public DefenseOpponentDto Opponent { get; set; }
+
+    [JsonPropertyName("game")]
+    public GameDto Game { get; set; }
 }
 
 public class DefenseTeamInfoDto
@@ -261,4 +267,30 @@ public class TeamOffensiveStatsDto
     [JsonPropertyName("targets")] public int? Targets { get; set; }
     [JsonPropertyName("receiving_yards")] public int? ReceivingYards { get; set; }
     [JsonPropertyName("receiving_tds")] public int? ReceivingTds { get; set; }
+}
+
+public class GameDto
+{
+    [JsonPropertyName("home_team")] public string HomeTeam { get; set; }
+    [JsonPropertyName("away_team")] public string AwayTeam { get; set; }
+
+    // Game info
+    [JsonPropertyName("weekday")] public string Weekday { get; set; }
+    [JsonPropertyName("game_datetime")] public DateTime GameDateTime { get; set; }
+    [JsonPropertyName("stadium_style")] public string StadiumStyle { get; set; }
+    [JsonPropertyName("is_divisional_game")] public bool IsDivisionalGame { get; set; }
+
+    // Rest days
+    [JsonPropertyName("home_rest_days")] public int HomeRestDays { get; set; }
+    [JsonPropertyName("away_rest_days")] public int AwayRestDays { get; set; }
+
+    // Betting odds
+    [JsonPropertyName("home_moneyline")] public int HomeMoneyline { get; set; }
+    [JsonPropertyName("away_moneyline")] public int AwayMoneyline { get; set; }
+    [JsonPropertyName("home_spread_odds")] public int HomeSpreadOdds { get; set; }
+    [JsonPropertyName("away_spread_odds")] public int AwaySpreadOdds { get; set; }
+    [JsonPropertyName("spread_line")] public double SpreadLine { get; set; }
+    [JsonPropertyName("total_line")] public double TotalLine { get; set; }
+    [JsonPropertyName("under_odds")] public int UnderOdds { get; set; }
+    [JsonPropertyName("over_odds")] public int OverOdds { get; set; }
 }
