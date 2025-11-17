@@ -2,7 +2,7 @@
 
 using System.Text.Json.Serialization;
 
-public class UserLeagueKData
+public class UserLeagueKData : IPlayerData
 {
     [JsonPropertyName("player")]
     public PlayerInfoDto Player { get; set; }

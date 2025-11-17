@@ -2,7 +2,7 @@
 
 using System.Text.Json.Serialization;
 
-public class UserLeagueFlexData
+public class UserLeagueFlexData : IPlayerData
 {
     [JsonPropertyName("player")]
     public PlayerInfoDto Player { get; set; }

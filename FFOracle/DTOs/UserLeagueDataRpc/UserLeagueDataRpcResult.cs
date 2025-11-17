@@ -2,6 +2,13 @@
 
 namespace FFOracle.DTOs.UserLeagueDataRpc;
 
+public interface IPlayerData
+{
+    PlayerInfoDto Player { get; }
+    OpponentDto Opponent { get; }
+    GameDto Game { get; }
+}
+
 public class UserLeagueDataRpcResult
 {
     [JsonPropertyName("players")]
