@@ -1,79 +1,89 @@
 using FFOracle.Services;
-using Microsoft.Extensions.Configuration.UserSecrets;
 using Supabase;
-//using Supabase.Postgrest.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Supabase settings
+#region --- Supabase Configuration ---
+
 var supabaseSection = builder.Configuration.GetRequiredSection("Supabase");
 var supabaseUrl = supabaseSection["Url"];
 var supabaseServiceRoleKey = supabaseSection["ServiceRoleKey"];
 
 if (string.IsNullOrEmpty(supabaseUrl) || string.IsNullOrEmpty(supabaseServiceRoleKey))
-{
     throw new InvalidOperationException("Supabase configuration is missing! Check appsettings.json or environment variables.");
-}
 
-// Register Supabase clients - service role key for privledged operations
-builder.Services.AddSingleton<Client>(sp =>
+builder.Services.AddSingleton<Client>(_ =>
 {
-    var options = new SupabaseOptions { AutoConnectRealtime = true };
-    return new Client(supabaseUrl, supabaseServiceRoleKey, options);
+    var supabaseOptions = new SupabaseOptions
+    {
+        AutoConnectRealtime = true
+    };
+
+    return new Client(supabaseUrl, supabaseServiceRoleKey, supabaseOptions);
 });
+
+#endregion
+
+
+#region --- Service Registrations ---
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-//Added this to allow connection to local frontend
+// Frontend CORS policy
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:3000") // your frontend URL
+        policy.WithOrigins("http://localhost:3000")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
 });
 
-// Add http client to nflverseservice for requesting player stats CSV data
+// External services
 builder.Services.AddHttpClient<NflVerseService>();
-
-// register the ChatGPTService
 builder.Services.AddScoped<ChatGPTService>();
 
-// register SupabaseAuthService
+// App-specific services
 builder.Services.AddScoped<SupabaseAuthService>();
+
+#endregion
+
+
+#region --- Stripe Configuration ---
+
+var stripeSection = builder.Configuration.GetRequiredSection("Stripe");
+var stripeSecretKey = stripeSection["SecretKey"];
+var stripePublishableKey = stripeSection["PublishableKey"];
+
+if (string.IsNullOrEmpty(stripeSecretKey))
+    throw new InvalidOperationException("Stripe configuration is missing! Add your keys to appsettings.json.");
+
+// Set global Stripe API key
+Stripe.StripeConfiguration.ApiKey = stripeSecretKey;
+
+#endregion
+
 
 var app = builder.Build();
 
-//enable CORS
+#region --- Middleware Pipeline ---
+
 app.UseCors();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-//assign variables for stripe keys. Currently, I do not need them. They're set in preparation for future use.
-var stripeSection = builder.Configuration.GetRequiredSection("Stripe");
-var stripeSecretKey = stripeSection["SecretKey"];
-var stripePublishableKey = stripeSection["PublishableKey"];
-if (string.IsNullOrEmpty(stripeSecretKey))
-{
-    throw new InvalidOperationException("Stripe configuration is missing! Add your keys to appsettings.json.");
-}
-// Set the global default variable for the stripe API key. This makes it usable anywhere in the app.
-Stripe.StripeConfiguration.ApiKey = stripeSecretKey;
-
-
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
 
 app.MapControllers();
+
+#endregion
 
 app.Run();

@@ -1,4 +1,4 @@
-﻿using FFOracle.DTOs;
+﻿using FFOracle.DTOs.Requests;
 using FFOracle.Services;
 using Microsoft.AspNetCore.Mvc;
 using Supabase;
@@ -21,7 +21,7 @@ public class UsersController: ControllerBase
 
     // SIGN UP
     [HttpPost("signup")]
-    public async Task<IActionResult> SignUp([FromBody] CreateUserRequest req)
+    public async Task<IActionResult> SignUp([FromBody] SignUpRequest req)
     {
         if (string.IsNullOrEmpty(req.Email) || string.IsNullOrEmpty(req.Password))
         {
@@ -44,7 +44,11 @@ public class UsersController: ControllerBase
             var user = new Models.Supabase.User
             {
                 Id = userId,
-                Email = req.Email
+                Email = req.Email,
+                Fullname = string.IsNullOrWhiteSpace(req.Fullname) ? null : req.Fullname,
+                PhoneNumber = string.IsNullOrWhiteSpace(req.PhoneNumber) ? null : req.PhoneNumber,
+                AllowEmails = req.AllowEmails,
+                TokensLeft = 1, // user starts with 1 free token
             };
 
             await _supabase.From<Models.Supabase.User>().Insert(user);
@@ -58,32 +62,6 @@ public class UsersController: ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, $"Error creating user: {ex.Message}");
-        }
-    }
-
-    // DELETE
-    [HttpDelete]
-    public async Task<IActionResult> Delete()
-    {
-        try
-        {
-            var userId = await _authService.AuthorizeUser(Request);
-            if (userId == Guid.Empty)
-            {
-                return Unauthorized("Invalid token");
-            }
-
-            // delete the user from public db
-            await _supabase
-                .From<Models.Supabase.User>()
-                .Where(u => u.Id == userId)
-                .Delete();
-
-            return Ok(new { message = "User deleted successfully" });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Error deleting user: {ex.Message}");
         }
     }
 }
