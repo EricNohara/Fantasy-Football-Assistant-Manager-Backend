@@ -28,6 +28,18 @@ public class RosterPredictionController: ControllerBase
         _authService = authService;
     }
 
+    // helper for cloning player data while cleaning fields by their position
+    private static T? CloneClean<T>(object source)
+    {
+        var json = JsonSerializer.Serialize(source, new JsonSerializerOptions
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        });
+
+        return JsonSerializer.Deserialize<T>(json);
+    }
+
+    // helper function for getting start count by position
     private int GetStartCountForPosition(string position, RosterSettingsDto rosterSettings)
     {
         int startCount = position switch
@@ -87,6 +99,37 @@ public class RosterPredictionController: ControllerBase
         ".Trim();
     }
 
+    // helper for generating prediction for players
+    private async Task<List<AiPositionRecommendation>> GeneratePositionRecommendations<T>(
+        string position,
+        IEnumerable<T> rosterData,
+        RosterSettingsDto rosterSettings,
+        ScoringSettingsDto scoringSettings
+    ) where T : IPlayerData
+    {
+        var list = rosterData.ToList();
+        int startCount = GetStartCountForPosition(position, rosterSettings);
+
+        if (list.Count <= startCount)
+        {
+            return list.Select(p => new AiPositionRecommendation
+            {
+                Position = position,
+                PlayerId = p.Player.Id,
+                Picked = true,
+                Reasoning = $"{p.Player.Name} is one of {list.Count} total {position}s on your roster in a league that allows {startCount} {position}s. By default, this means to maximize your score for this week, {p.Player.Name} is a must start.{(list.Count < startCount ? $" Strongly consider adding {startCount - list.Count} more {position}s to maximize your roster." : "")}"
+            }).ToList();
+        }
+
+        var query = BuildAiPrompt(position, list, rosterSettings, scoringSettings);
+        var aiResponse = await _chatService.SendMessageAsync(query);
+
+        return JsonSerializer.Deserialize<List<AiPositionRecommendation>>(
+            aiResponse,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+        ) ?? [];
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetPrediction()
     {
@@ -131,64 +174,31 @@ public class RosterPredictionController: ControllerBase
             // prune unneeded data by position
             var qbList = roster
                 .Where(p => p.Player.Position == "QB")
-                .Select(p =>
-                {
-                    // Create a shallow copy and let JSON ignore nulls
-                    var json = JsonSerializer.Serialize(p, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
-                    return JsonSerializer.Deserialize<UserLeagueQBData>(json);
-                })
+                .Select(CloneClean<UserLeagueQBData>)
                 .ToList();
 
             var rbList = roster
                 .Where(p => p.Player.Position == "RB")
-                .Select(p =>
-                {
-                    // Create a shallow copy and let JSON ignore nulls
-                    var json = JsonSerializer.Serialize(p, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
-                    return JsonSerializer.Deserialize<UserLeagueFlexData>(json);
-                })
+                .Select(CloneClean<UserLeagueFlexData>)
                 .ToList();
 
             var wrList = roster
                 .Where(p => p.Player.Position == "WR")
-                .Select(p =>
-                {
-                    // Create a shallow copy and let JSON ignore nulls
-                    var json = JsonSerializer.Serialize(p, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
-                    return JsonSerializer.Deserialize<UserLeagueFlexData>(json);
-                })
+                .Select(CloneClean<UserLeagueFlexData>)
                 .ToList();
 
             var teList = roster
                 .Where(p => p.Player.Position == "TE")
-                .Select(p =>
-                {
-                    // Create a shallow copy and let JSON ignore nulls
-                    var json = JsonSerializer.Serialize(p, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
-                    return JsonSerializer.Deserialize<UserLeagueFlexData>(json);
-                })
+                .Select(CloneClean<UserLeagueFlexData>)
                 .ToList();
 
             var kList = roster
                 .Where(p => p.Player.Position == "K")
-                .Select(p =>
-                {
-                    // Create a shallow copy and let JSON ignore nulls
-                    var json = JsonSerializer.Serialize(p, new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
-                    return JsonSerializer.Deserialize<UserLeagueKData>(json);
-                })
+                .Select(CloneClean<UserLeagueKData>)
                 .ToList();
 
             var defList = leagueData.Defenses?
-                .Select(d =>
-                {
-                    var json = JsonSerializer.Serialize(
-                        d,
-                        new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull }
-                    );
-
-                    return JsonSerializer.Deserialize<DefenseDto>(json);
-                })
+                .Select(CloneClean<DefenseDto>)
                 .ToList() ?? new List<DefenseDto>();
 
             // aggregate pruned data by position
@@ -207,56 +217,14 @@ public class RosterPredictionController: ControllerBase
             // for each offensive position group, generate AI predictions
             foreach (var kvp in positionMap)
             {
-                var position = kvp.Key;
-                var rosterDataForPosition = kvp.Value;
-                int startCount = GetStartCountForPosition(position, rosterSettings);
-                int positionCount = rosterDataForPosition.Count();
-
-                if (positionCount == 0)
-                {
-                    // skip if there are no players at this position
-                    continue;
-                } else if (positionCount <= startCount)
-                {
-                    // by default the players on the inputted roster must start
-                    foreach (var rosterData in rosterDataForPosition)
-                    {
-                        var defaultRecommendation = new AiPositionRecommendation
-                        {
-                            Position = position,
-                            PlayerId = rosterData.Player.Id,
-                            Picked = true,
-                            Reasoning = $"{rosterData.Player.Name} is one of {positionCount} total {position}s on your roster in a league that allows {startCount} {position}s. By default, this means to maximize your score for this week, {rosterData.Player.Name} is a must start.{(positionCount < startCount ? $" Strongly consider adding {startCount - positionCount} more {position}s to maximize your roster." : "")}"
-                        };
-                        aiRosterRecommendation.Recommendations.Add(defaultRecommendation);
-                    }
-                    continue;
-                }
-
-                // create query
-                string query = BuildAiPrompt(
-                    position,
-                    rosterDataForPosition,
+                var recs = await GeneratePositionRecommendations(
+                    kvp.Key,
+                    kvp.Value,
                     rosterSettings,
                     scoringSettings
                 );
 
-                var aiResponse = await _chatService.SendMessageAsync(query);
-
-                // deserialize recommendation and add it to final output
-                var recommendations = JsonSerializer.Deserialize<List<AiPositionRecommendation>>(
-                    aiResponse, 
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                );
-
-                // validate and add recommendations
-                foreach (var recommendation in recommendations ?? [])
-                {
-                    if (recommendation != null)
-                    {
-                        aiRosterRecommendation.Recommendations.Add(recommendation);
-                    }
-                }
+                aiRosterRecommendation.Recommendations.AddRange(recs);
             }
 
             // generate AI predictions for FLEX (RB/WR/TE that have not already been picked)
@@ -278,43 +246,14 @@ public class RosterPredictionController: ControllerBase
 
             if (flexCandidates.Any())
             {
-                if (flexCandidates.Count <= rosterSettings.FlexCount)
-                {
-                    // by default the flex candidates on the inputted roster must start
-                    foreach (var flexData in flexCandidates)
-                    {
-                        var defaultFlexRecommendation = new AiPositionRecommendation
-                        {
-                            Position = "FLEX",
-                            PlayerId = flexData.Player.Id ?? "",
-                            Picked = true,
-                            Reasoning = $"{flexData.Player.Name} is one of {flexCandidates.Count} total FLEX candidates on your roster in a league that allows {rosterSettings.FlexCount} FLEX players. By default, this means to maximize your score for this week, {flexData.Player.Name} is a must start.{(flexCandidates.Count < rosterSettings.FlexCount ? $" Strongly consider adding {rosterSettings.FlexCount - flexCandidates.Count} more FLEX candidates to maximize your roster." : "")}"
-                        };
-                        aiRosterRecommendation.Recommendations.Add(defaultFlexRecommendation);
-                    }
-                } else
-                {
-                    string flexQuery = BuildAiPrompt(
-                        "FLEX",
-                        flexCandidates,
-                        rosterSettings,
-                        scoringSettings
-                    );
+                var flexRecs = await GeneratePositionRecommendations(
+                    "FLEX",
+                    flexCandidates,
+                    rosterSettings,
+                    scoringSettings
+                );
 
-                    var flexResponse = await _chatService.SendMessageAsync(flexQuery);
-
-                    var flexRecs = JsonSerializer.Deserialize<List<AiPositionRecommendation>>(
-                        flexResponse,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                    );
-
-                    // validate and add recommendations
-                    foreach (var rec in flexRecs ?? [])
-                    {
-                        rec.Position = "FLEX";
-                        aiRosterRecommendation.Recommendations.Add(rec);
-                    }
-                }
+                aiRosterRecommendation.Recommendations.AddRange(flexRecs);
             }
 
             // generate AI predictions for DEF
