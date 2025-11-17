@@ -32,10 +32,9 @@ public class UpdateSupabaseService
             .Select("current_week")
             .Get();
 
+        // Compute the week range: last 2 completed weeks
         int currentWeek = appStateResponse.Models.FirstOrDefault()?.CurrentWeek ?? 1;
-
-        // Compute the week range: last 3 completed weeks
-        int startWeek = Math.Max(currentWeek - 3, 1);
+        int startWeek = Math.Max(currentWeek - 2, 1);
         int endWeek = Math.Max(currentWeek - 1, 1);
 
         // Fetch all existing players from the players table
@@ -46,9 +45,13 @@ public class UpdateSupabaseService
 
         var existingPlayerIds = existingPlayersResponse.Models.Select(p => p.Id).ToHashSet();
 
-        // Filter stats to only include existing players and new weeks
+        // delete old weekly stats
+        await _supabase.Rpc("delete_all_weekly_stats", new { });
+
+        // Filter stats to only include existing players within correct week range
         var newStats = weeklyStats
-            .Where(s => s.Week >= startWeek && s.Week <= endWeek && existingPlayerIds.Contains(s.PlayerId))
+            .Where(s => existingPlayerIds.Contains(s.PlayerId) &&
+                        s.Week >= startWeek && s.Week <= endWeek)
             .ToList();
 
         // add new stats if they exist
@@ -100,7 +103,7 @@ public class UpdateSupabaseService
                         FgMadeList = p.FgMadeList,
                         FgMissedList = p.FgMissedList,
                         FgBlockedList = p.FgBlockedList,
-                        PadAttempts = ControllerHelpers.NullIfZero(p.PadAttempts),
+                        PatAttempts = ControllerHelpers.NullIfZero(p.PadAttempts),
                         PatPercent = ControllerHelpers.NullIfZero(p.PatPercent),
                         FantasyPoints = p.FantasyPoints,
                         FantasyPointsPpr = p.FantasyPointsPpr
@@ -118,9 +121,6 @@ public class UpdateSupabaseService
                 .From<WeeklyPlayerStat>()
                 .Insert(weeklyPlayerStats);
         }
-
-        // delete all old weekly stats
-        await _supabase.Rpc("delete_old_week_stats", new { min_week = startWeek });
 
         return (startWeek, endWeek);
     }
@@ -483,7 +483,7 @@ public class UpdateSupabaseService
                     FgMadeList = null,
                     FgMissedList = null,
                     FgBlockedList = null,
-                    PadAttempts = null,
+                    PatAttempts = null,
                     PatPercent = null,
                     FantasyPoints = null,
                     FantasyPointsPpr = null

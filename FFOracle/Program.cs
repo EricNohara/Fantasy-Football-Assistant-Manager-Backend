@@ -1,4 +1,5 @@
 using FFOracle.Services;
+using Microsoft.Extensions.Configuration.UserSecrets;
 using Supabase;
 //using Supabase.Postgrest.Models;
 
@@ -41,6 +42,9 @@ builder.Services.AddHttpClient<NflVerseService>();
 
 // register the ChatGPTService
 builder.Services.AddScoped<ChatGPTService>();
+
+// register SupabaseAuthService
+builder.Services.AddScoped<SupabaseAuthService>();
 
 var app = builder.Build();
 

@@ -1,4 +1,5 @@
 ﻿using FFOracle.Models.Supabase;
+using FFOracle.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Supabase;
 using Supabase.Postgrest.Responses;
@@ -7,7 +8,7 @@ using static Supabase.Postgrest.Constants;
 //A controller to retrieve all data specific to a certain user
 //Based on the SupeBaseController code used for our test app
 
-namespace FFOracle.Controllers.SupabaseControllers;
+namespace FFOracle.Controllers.Public;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -23,7 +24,7 @@ public class GetPlayersByPositionController : ControllerBase
     // Read-only endpoint to fetch all players of a certain position.
     // If the position is defense, it instead returns all teams.
     [HttpGet("{position}/{seasonStartYear}")]
-    public async Task<IActionResult> GetPlayersByPosition(String position, int seasonStartYear)
+    public async Task<IActionResult> GetPlayersByPosition(string position, int seasonStartYear)
     {
         try
         {

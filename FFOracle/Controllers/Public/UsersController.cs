@@ -1,17 +1,22 @@
 ﻿using FFOracle.DTOs;
+using FFOracle.Services;
 using Microsoft.AspNetCore.Mvc;
+using Supabase;
+using Supabase.Postgrest.Exceptions;
 
-namespace FFOracle.Controllers;
+namespace FFOracle.Controllers.Public;
 
 [ApiController]
 [Route("api/[controller]")]
 public class UsersController: ControllerBase
 {
-    private readonly Supabase.Client _supabase;
+    private readonly Client _supabase;
+    private readonly SupabaseAuthService _authService;
 
-    public UsersController(Supabase.Client supabase)
+    public UsersController(Client supabase, SupabaseAuthService authService)
     {
         _supabase = supabase;
+        _authService = authService;
     }
 
     // SIGN UP
@@ -46,7 +51,7 @@ public class UsersController: ControllerBase
 
             return Ok(new { message = "User created successfully" });
         }
-        catch (Supabase.Postgrest.Exceptions.PostgrestException e) when (e.Message.Contains("duplicate"))
+        catch (PostgrestException e) when (e.Message.Contains("duplicate"))
         {
             return BadRequest("User with this email already exists.");
         }
@@ -62,23 +67,7 @@ public class UsersController: ControllerBase
     {
         try
         {
-            // get the token from the Authorization header
-            var authHeader = Request.Headers["Authorization"].ToString();
-            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
-            {
-                return Unauthorized("Missing or invalid token");
-            }
-
-            var accessToken = authHeader.Substring("Bearer ".Length);
-
-            // verify the token with Supabase
-            var user = await _supabase.Auth.GetUser(accessToken);
-            if (user == null)
-            {
-                return Unauthorized("Invalid token");
-            }
-
-            var userId = Guid.Parse(user.Id);
+            var userId = await _authService.AuthorizeUser(Request);
             if (userId == Guid.Empty)
             {
                 return Unauthorized("Invalid token");

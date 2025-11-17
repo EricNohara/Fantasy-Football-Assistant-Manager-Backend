@@ -4,7 +4,7 @@ using FFOracle.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Supabase;
 
-namespace FFOracle.Controllers;
+namespace FFOracle.Controllers.Internal;
 
 [ApiController]
 [Route("api/[controller]")]

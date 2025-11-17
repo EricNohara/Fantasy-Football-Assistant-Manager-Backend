@@ -106,7 +106,7 @@ public class PlayerStat : BaseModel
 
     [Column("pat_attempts")]
     [JsonPropertyName("pat_attempts")]
-    public int? PadAttempts { get; set; }
+    public int? PatAttempts { get; set; }
 
     [Column("pat_percent")]
     [JsonPropertyName("pat_percent")]
