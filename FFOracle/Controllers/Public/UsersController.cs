@@ -8,7 +8,7 @@ namespace FFOracle.Controllers.Public;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UsersController: ControllerBase
+public class UsersController : ControllerBase
 {
     private readonly Client _supabase;
     private readonly SupabaseAuthService _authService;
@@ -90,3 +90,4 @@ public class UsersController: ControllerBase
             return StatusCode(500, $"Error deleting user: {ex.Message}");
         }
     }
+}
