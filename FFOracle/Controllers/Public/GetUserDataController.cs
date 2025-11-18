@@ -5,7 +5,7 @@ using System.Text.Json;
 //A controller to retrieve all data specific to a certain user
 //Based on the SupeBaseController code used for our test app
 
-namespace FFOracle.Controllers.SupabaseControllers;
+namespace FFOracle.Controllers.Public;
 
 [ApiController]
 [Route("api/[controller]")]
