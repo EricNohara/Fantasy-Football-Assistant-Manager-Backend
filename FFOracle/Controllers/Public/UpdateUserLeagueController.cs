@@ -33,11 +33,17 @@ public class UpdateUserLeagueController : Controller
     [HttpPut]
     public async Task<IActionResult> UpdateLeague([FromBody] DTOs.LeagueUpdate info)
     {
-        //Pass an abbreviated set of league info for Supabase to act on via rpc
-        await _supabase.Rpc(
-            "update_league",
-            new { updateInfo = info }
-            );
+
+        //Turn the update info into a json string, then convert to a json element to be passed into the rpc
+        var json = JsonSerializer.Serialize(info);
+        var element = JsonSerializer.Deserialize<JsonElement>(json);
+        await _supabase.Rpc("update_league", new { updateinfo = element });
+
+        ////Pass an abbreviated set of league info for Supabase to act on via rpc
+        //await _supabase.Rpc(
+        //    "update_league",
+        //    new { updateinfo = info }
+        //    );
         return Ok();
     }
 }
