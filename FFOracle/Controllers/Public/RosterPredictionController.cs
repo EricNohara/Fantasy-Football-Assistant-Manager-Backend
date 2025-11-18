@@ -141,6 +141,15 @@ public class RosterPredictionController: ControllerBase
                 return Unauthorized("Invalid token");
             }
 
+            // get the remaining tokens for the user
+            var remainingTokens = await _authService.GetUserTokensLeft(userId);
+
+            // return Unauthorized if no tokens left
+            if (remainingTokens <= 0)
+            {
+                return Unauthorized("No tokens remaining");
+            }
+
             // get the inputted league id from query parameters
             var leagueIdStr = HttpContext.Request.Query["leagueId"].ToString();
             if (!Guid.TryParse(leagueIdStr, out Guid leagueId))
@@ -300,6 +309,9 @@ public class RosterPredictionController: ControllerBase
                     }
                 }
             }
+
+            // decrement the remaining tokens for the user after successful operation ONLY
+            await _authService.DecrementUserTokens(userId);
 
             return Ok(aiRosterRecommendation);
         }

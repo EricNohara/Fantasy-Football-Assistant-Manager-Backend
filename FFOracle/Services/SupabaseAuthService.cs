@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using FFOracle.Models.Supabase;
+using Microsoft.AspNetCore.Http;
 using Supabase;
 
 namespace FFOracle.Services;
@@ -43,6 +44,46 @@ public class SupabaseAuthService
         catch
         {
             return null;
+        }
+    }
+
+    public async Task<int> GetUserTokensLeft(Guid? userId)
+    {
+        if (userId == null || userId == Guid.Empty)
+        {
+            return -1;
+        }
+
+        var userRes = await _supabase
+            .From<User>()
+            .Where(x => x.Id == userId)
+            .Get();
+
+        var userData = userRes.Model;
+
+        return userData != null ? userData.TokensLeft : -1;
+    }
+
+    public async Task DecrementUserTokens(Guid? userId)
+    {
+        if (userId == null || userId == Guid.Empty)
+        {
+            return;
+        }
+
+        var userRes = await _supabase
+            .From<User>()
+            .Where(x => x.Id == userId)
+            .Get();
+
+        var userData = userRes.Model;
+        if (userData != null)
+        {
+            userData.TokensLeft = Math.Max(0, userData.TokensLeft - 1);
+            await _supabase
+                .From<User>()
+                .Where(x => x.Id == userId)
+                .Update(userData);
         }
     }
 }
