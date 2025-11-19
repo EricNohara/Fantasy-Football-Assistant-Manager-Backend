@@ -196,30 +196,43 @@ public class UpdateUserLeagueController : Controller
     }
 
     //add member route
-    [HttpPut("addMembers")]
-    public async Task<IActionResult> AddLeagueMembers(
-        [FromBody] DTOs.LeagueMemberLists member_lists,
-        Guid league_id
-    )
+    [HttpPost("addMember")]
+    public async Task<IActionResult> AddLeagueMember([FromBody] AddLeagueMemberRequest req)
     {
-        //Turn the update info into a json string, then convert to a
-        // json element to be passed into the rpc
-        var json = JsonSerializer.Serialize(member_lists);
-        var element = JsonSerializer.Deserialize<JsonElement>(json);
-        await _supabase.Rpc(
-            "add_league_members",
-            new
+        try
+        {
+            // check user is authenticated
+            var userId = await _authService.AuthorizeUser(Request);
+            if (userId == null)
             {
-                member_lists,
-                league_id
+                return Unauthorized(new { error = "User not authenticated" });
             }
-            );
+            // check if user is league owner
+            var leagueOwnerRes = await _supabase
+                .From<UserLeague>()
+                .Where(ul => ul.Id == req.LeagueId && ul.UserID == userId)
+                .Get();
+            if (leagueOwnerRes.Models.Count == 0)
+            {
+                return NotFound(new { error = "League not found or you are not the owner" });
+            }
 
-        return Ok();
+            var result = await _supabase.Rpc("add_league_member", new
+            {
+                p_league_id = req.LeagueId,
+                p_member_id = req.MemberId,
+                p_is_defense = req.IsDefense
+            });
+            return Ok(new { success = true, message = result.Content });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error adding league member", details = ex.Message });
+        }
     }
 
     //delete member route
-    [HttpPut("deleteMembers")]
+    [HttpDelete("deleteMember")]
     public async Task<IActionResult> DeleteLeagueMembers(
         [FromBody] DTOs.LeagueMemberLists member_lists,
         Guid league_id
