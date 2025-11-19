@@ -16,7 +16,7 @@ public class UpdateUserLeagueController : Controller
         _supabase = supabase;
     }
 
-    //DELETE route
+    //delete league route
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteLeague(Guid id)
     {
@@ -29,21 +29,112 @@ public class UpdateUserLeagueController : Controller
         return Ok();
     }
 
-    //UPDATE route
-    [HttpPut]
-    public async Task<IActionResult> UpdateLeague([FromBody] DTOs.LeagueUpdate info)
+    //update scoring settings route
+    [HttpPut("updateScoring")]
+    public async Task<IActionResult> UpdateScoringSettings(
+        [FromBody] DTOs.ScoringSetting new_settings
+        )
     {
-
-        //Turn the update info into a json string, then convert to a json element to be passed into the rpc
-        var json = JsonSerializer.Serialize(info);
+        //Turn the update info into a json string, then convert to a
+        // json element to be passed into the rpc
+        var json = JsonSerializer.Serialize(new_settings);
         var element = JsonSerializer.Deserialize<JsonElement>(json);
-        await _supabase.Rpc("update_league", new { updateinfo = element });
+        await _supabase.Rpc(
+            "update_scoring_settings",
+            new
+            {
+                new_settings
+            }
+            );
 
-        ////Pass an abbreviated set of league info for Supabase to act on via rpc
-        //await _supabase.Rpc(
-        //    "update_league",
-        //    new { updateinfo = info }
-        //    );
+        return Ok();
+    }
+
+    //update roster settings route
+    [HttpPut("updateRoster")]
+    public async Task<IActionResult> UpdateRosterSettings(
+        [FromBody] DTOs.RosterSetting new_settings
+        )
+    {
+        //Turn the update info into a json string, then convert to a
+        // json element to be passed into the rpc
+        var json = JsonSerializer.Serialize(new_settings);
+        var element = JsonSerializer.Deserialize<JsonElement>(json);
+        await _supabase.Rpc(
+            "update_roster_settings",
+            new
+            {
+                new_settings
+            }
+            );
+
+        return Ok();
+    }
+
+    //update member picked status route
+    [HttpPut("updatePickedMembers")]
+    public async Task<IActionResult> UpdatePickedLeagueMembers(
+        [FromBody] DTOs.LeagueMemberLists member_lists,
+        Guid league_id
+    ){
+        //Turn the update info into a json string, then convert to a
+        // json element to be passed into the rpc
+        var json = JsonSerializer.Serialize(member_lists);
+        var element = JsonSerializer.Deserialize<JsonElement>(json);
+        await _supabase.Rpc(
+            "update_picked_league_members", 
+            new { 
+                member_lists,
+                league_id
+            }
+            );
+
+        return Ok();
+    }
+
+    //add member route
+    [HttpPut("addMembers")]
+    public async Task<IActionResult> AddLeagueMembers(
+        [FromBody] DTOs.LeagueMemberLists member_lists,
+        Guid league_id
+    )
+    {
+        //Turn the update info into a json string, then convert to a
+        // json element to be passed into the rpc
+        var json = JsonSerializer.Serialize(member_lists);
+        var element = JsonSerializer.Deserialize<JsonElement>(json);
+        await _supabase.Rpc(
+            "add_league_members",
+            new
+            {
+                member_lists,
+                league_id
+            }
+            );
+
+        return Ok();
+    }
+
+    //delete member route
+    [HttpPut("deleteMembers")]
+    public async Task<IActionResult> DeleteLeagueMembers(
+        [FromBody] DTOs.LeagueMemberLists member_lists,
+        Guid league_id
+    )
+    {
+        //Turn the update info into a json string, then convert to a
+        // json element to be passed into the rpc
+        var json = JsonSerializer.Serialize(member_lists);
+        var element = JsonSerializer.Deserialize<JsonElement>(json);
+        await _supabase.Rpc(
+            "delete_league_members",
+            new
+            {
+                member_lists,
+                league_id
+            }
+            );
+
         return Ok();
     }
 }
