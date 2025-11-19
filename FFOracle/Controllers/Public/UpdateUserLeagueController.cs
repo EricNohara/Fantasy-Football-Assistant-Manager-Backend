@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Supabase;
 using System.Text.Json;
+using FFOracle.DTOs.Requests;
+using FFOracle.Services;
 
 namespace FFOracle.Controllers.Public;
 
@@ -11,47 +13,100 @@ namespace FFOracle.Controllers.Public;
 public class UpdateUserLeagueController : Controller
 {
     private readonly Client _supabase;
-    public UpdateUserLeagueController(Client supabase)
+    private readonly SupabaseAuthService _authService;
+
+    public UpdateUserLeagueController(Client supabase, SupabaseAuthService authService)
     {
         _supabase = supabase;
+        _authService = authService;
     }
 
     //delete league route
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteLeague(Guid id)
+    [HttpDelete]
+    public async Task<IActionResult> DeleteLeague(Guid leagueId)
     {
-        //Delete the league with the id given. Any cascading is done by Supabase. 
-        await _supabase
-            .From<UserLeague>()
-            .Where(t => t.Id == id)
-            .Delete();
+        try
+        {
+            // check user is authenticated
+            var userId = await _authService.AuthorizeUser(Request);
+            if (userId == null)
+            {
+                return Unauthorized(new { error = "User not authenticated" });
+            }
 
-        return Ok();
+            // only league owner can delete league
+            var leagueOwnerRes = await _supabase
+                .From<UserLeague>()
+                .Where(ul => ul.Id == leagueId && ul.UserID == userId)
+                .Get();
+
+            if (leagueOwnerRes.Models.Count == 0)
+            {
+                return Forbid();
+            }
+
+            // Delete the league 
+            await _supabase.Rpc("delete_league", new { _league_id = leagueId });
+
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error authenticating user", details = ex.Message });
+        }
     }
 
     //update scoring settings route
-    [HttpPut("updateScoring")]
-    public async Task<IActionResult> UpdateScoringSettings(
-        [FromBody] DTOs.ScoringSetting new_settings
-        )
+    [HttpPut("updateScoringSettings")]
+    public async Task<IActionResult> UpdateScoringSettings([FromBody] UpdateScoringSettingsRequest req)
     {
-        //Turn the update info into a json string, then convert to a
-        // json element to be passed into the rpc
-        var json = JsonSerializer.Serialize(new_settings);
-        var element = JsonSerializer.Deserialize<JsonElement>(json);
-        await _supabase.Rpc(
-            "update_scoring_settings",
-            new
+        try
+        {
+            // check user is authenticated
+            var userId = await _authService.AuthorizeUser(Request);
+            if (userId == null)
             {
-                new_settings
+                return Unauthorized(new { error = "User not authenticated" });
             }
-            );
 
-        return Ok();
+            // check if user is league owner
+            var leagueOwnerRes = await _supabase
+                .From<UserLeague>()
+                .Where(ul => ul.Id == req.LeagueId && ul.UserID == userId)
+                .Get();
+
+            if (leagueOwnerRes.Models.Count == 0)
+            {
+                return NotFound(new { error = "League not found or you are not the owner" });
+            }
+
+            // Convert request to json
+            var newSettings = new
+            {
+                points_per_td = req.PointsPerTd,
+                points_per_reception = req.PointsPerReception,
+                points_per_passing_yard = req.PointsPerPassingYard,
+                points_per_rushing_yard = req.PointsPerRushingYard,
+                points_per_reception_yard = req.PointsPerReceptionYard
+            };
+
+            // Call RPC
+            await _supabase.Rpc("update_league_scoring", new
+            {
+                league_id = req.LeagueId,
+                new_settings = newSettings
+            });
+
+            return Ok(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error updating scoring settings", details = ex.Message });
+        }
     }
 
     //update roster settings route
-    [HttpPut("updateRoster")]
+    [HttpPut("updateRosterSettings")]
     public async Task<IActionResult> UpdateRosterSettings(
         [FromBody] DTOs.RosterSetting new_settings
         )
@@ -72,7 +127,7 @@ public class UpdateUserLeagueController : Controller
     }
 
     //update member picked status route
-    [HttpPut("updatePickedMembers")]
+    [HttpPut("updatePickedMemberStatus")]
     public async Task<IActionResult> UpdatePickedLeagueMembers(
         [FromBody] DTOs.LeagueMemberLists member_lists,
         Guid league_id

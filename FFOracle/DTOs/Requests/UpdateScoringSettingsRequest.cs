@@ -1,11 +1,11 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
-namespace FFOracle.DTOs;
+namespace FFOracle.DTOs.Requests;
 
-public class ScoringSetting
+public class UpdateScoringSettingsRequest
 {
-    [JsonPropertyName("id")]
-    public Guid Id { get; set; }
+    [JsonPropertyName("league_id")]
+    public Guid LeagueId { get; set; }
 
     [JsonPropertyName("points_per_td")]
     public float PointsPerTd { get; set; }
