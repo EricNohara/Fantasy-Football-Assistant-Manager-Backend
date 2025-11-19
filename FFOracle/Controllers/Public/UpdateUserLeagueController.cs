@@ -107,44 +107,92 @@ public class UpdateUserLeagueController : Controller
 
     //update roster settings route
     [HttpPut("updateRosterSettings")]
-    public async Task<IActionResult> UpdateRosterSettings(
-        [FromBody] DTOs.RosterSetting new_settings
-        )
+    public async Task<IActionResult> UpdateRosterSettings([FromBody] UpdateRosterSettingsRequest req)
     {
-        //Turn the update info into a json string, then convert to a
-        // json element to be passed into the rpc
-        var json = JsonSerializer.Serialize(new_settings);
-        var element = JsonSerializer.Deserialize<JsonElement>(json);
-        await _supabase.Rpc(
-            "update_roster_settings",
-            new
+        try
+        {
+            // check user is authenticated
+            var userId = await _authService.AuthorizeUser(Request);
+            if (userId == null)
             {
-                new_settings
+                return Unauthorized(new { error = "User not authenticated" });
             }
-            );
 
-        return Ok();
+            // check if user is league owner
+            var leagueOwnerRes = await _supabase
+                .From<UserLeague>()
+                .Where(ul => ul.Id == req.LeagueId && ul.UserID == userId)
+                .Get();
+            if (leagueOwnerRes.Models.Count == 0)
+            {
+                return NotFound(new { error = "League not found or you are not the owner" });
+            }
+
+            // Convert request to json
+            var newSettings = new
+            {
+                qb_count = req.QbCount,
+                rb_count = req.RbCount,
+                wr_count = req.WrCount,
+                te_count = req.TeCount,
+                k_count = req.KCount,
+                flex_count = req.FlexCount,
+                def_count = req.DefCount,
+                bench_count = req.BenchCount,
+                ir_count = req.IrCount
+            };
+
+            // Call RPC
+            await _supabase.Rpc("update_league_roster_settings", new
+            {
+                league_id = req.LeagueId,
+                new_settings = newSettings
+            });
+
+            return Ok(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error updating league roster settings", details = ex.Message });
+        }
     }
 
     //update member picked status route
-    [HttpPut("updatePickedMemberStatus")]
-    public async Task<IActionResult> UpdatePickedLeagueMembers(
-        [FromBody] DTOs.LeagueMemberLists member_lists,
-        Guid league_id
-    ){
-        //Turn the update info into a json string, then convert to a
-        // json element to be passed into the rpc
-        var json = JsonSerializer.Serialize(member_lists);
-        var element = JsonSerializer.Deserialize<JsonElement>(json);
-        await _supabase.Rpc(
-            "update_picked_league_members", 
-            new { 
-                member_lists,
-                league_id
+    [HttpPut("updatePickedStatus")]
+    public async Task<IActionResult> UpdatePickedLeagueMembers([FromBody] UpdatePlayerPickedRequest req){
+        try
+        {
+            // check user is authenticated
+            var userId = await _authService.AuthorizeUser(Request);
+            if (userId == null)
+            {
+                return Unauthorized(new { error = "User not authenticated" });
             }
-            );
 
-        return Ok();
+            // check if user is league owner
+            var leagueOwnerRes = await _supabase
+                .From<UserLeague>()
+                .Where(ul => ul.Id == req.LeagueId && ul.UserID == userId)
+                .Get();
+            if (leagueOwnerRes.Models.Count == 0)
+            {
+                return NotFound(new { error = "League not found or you are not the owner" });
+            }
+
+            await _supabase.Rpc("update_league_member_picked", new
+            {
+                p_league_id = req.LeagueId,
+                p_member_id = req.MemberId,
+                p_picked = req.Picked,
+                p_is_defense = req.IsDefense
+            });
+
+            return Ok(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error updating league player picked status", details = ex.Message });
+        }
     }
 
     //add member route
