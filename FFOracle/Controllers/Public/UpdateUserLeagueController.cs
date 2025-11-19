@@ -57,7 +57,7 @@ public class UpdateUserLeagueController : Controller
     }
 
     //update scoring settings route
-    [HttpPut("updateScoringSettings")]
+    [HttpPut("scoringSettings")]
     public async Task<IActionResult> UpdateScoringSettings([FromBody] UpdateScoringSettingsRequest req)
     {
         try
@@ -106,7 +106,7 @@ public class UpdateUserLeagueController : Controller
     }
 
     //update roster settings route
-    [HttpPut("updateRosterSettings")]
+    [HttpPut("rosterSettings")]
     public async Task<IActionResult> UpdateRosterSettings([FromBody] UpdateRosterSettingsRequest req)
     {
         try
@@ -158,7 +158,7 @@ public class UpdateUserLeagueController : Controller
     }
 
     //update member picked status route
-    [HttpPut("updatePickedStatus")]
+    [HttpPut("pickedStatus")]
     public async Task<IActionResult> UpdatePickedLeagueMembers([FromBody] UpdatePlayerPickedRequest req){
         try
         {
@@ -196,8 +196,8 @@ public class UpdateUserLeagueController : Controller
     }
 
     //add member route
-    [HttpPost("addMember")]
-    public async Task<IActionResult> AddLeagueMember([FromBody] AddLeagueMemberRequest req)
+    [HttpPost("member")]
+    public async Task<IActionResult> AddLeagueMember([FromBody] LeagueMemberRequest req)
     {
         try
         {
@@ -231,27 +231,84 @@ public class UpdateUserLeagueController : Controller
         }
     }
 
-    //delete member route
-    [HttpDelete("deleteMember")]
-    public async Task<IActionResult> DeleteLeagueMembers(
-        [FromBody] DTOs.LeagueMemberLists member_lists,
-        Guid league_id
-    )
+    // swap members route
+    [HttpPut("member")]
+    public async Task<IActionResult> SwapLeagueMember([FromBody] SwapLeagueMemberRequest req)
     {
-        //Turn the update info into a json string, then convert to a
-        // json element to be passed into the rpc
-        var json = JsonSerializer.Serialize(member_lists);
-        var element = JsonSerializer.Deserialize<JsonElement>(json);
-        await _supabase.Rpc(
-            "delete_league_members",
-            new
+        try
+        {
+            // check user is authenticated
+            var userId = await _authService.AuthorizeUser(Request);
+            if (userId == null)
             {
-                member_lists,
-                league_id
+                return Unauthorized(new { error = "User not authenticated" });
             }
-            );
+            // check if user is league owner
+            var leagueOwnerRes = await _supabase
+                .From<UserLeague>()
+                .Where(ul => ul.Id == req.LeagueId && ul.UserID == userId)
+                .Get();
+            if (leagueOwnerRes.Models.Count == 0)
+            {
+                return NotFound(new { error = "League not found or you are not the owner" });
+            }
 
-        return Ok();
+            // delete old league member
+            var deleteResult = await _supabase.Rpc("delete_league_member", new
+            {
+                p_league_id = req.LeagueId,
+                p_member_id = req.OldMemberId,
+                p_is_defense = req.OldIsDefense
+            });
+
+            var addResult = await _supabase.Rpc("add_league_member", new
+            {
+                p_league_id = req.LeagueId,
+                p_member_id = req.NewMemberId,
+                p_is_defense = req.NewIsDefense
+            });
+            return Ok(new { success = true, message = addResult.Content });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error swapping league members", details = ex.Message });
+        }
+    }
+
+    //delete member route
+    [HttpDelete("member")]
+    public async Task<IActionResult> DeleteLeagueMember([FromBody] LeagueMemberRequest req)
+    {
+        try
+        {
+            // check user is authenticated
+            var userId = await _authService.AuthorizeUser(Request);
+            if (userId == null)
+            {
+                return Unauthorized(new { error = "User not authenticated" });
+            }
+            // check if user is league owner
+            var leagueOwnerRes = await _supabase
+                .From<UserLeague>()
+                .Where(ul => ul.Id == req.LeagueId && ul.UserID == userId)
+                .Get();
+            if (leagueOwnerRes.Models.Count == 0)
+            {
+                return NotFound(new { error = "League not found or you are not the owner" });
+            }
+
+            var result = await _supabase.Rpc("delete_league_member", new
+            {
+                p_league_id = req.LeagueId,
+                p_member_id = req.MemberId,
+                p_is_defense = req.IsDefense
+            });
+            return Ok(new { success = true, message = result.Content });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error adding league member", details = ex.Message });
+        }
     }
 }
 
