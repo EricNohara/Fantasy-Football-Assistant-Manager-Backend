@@ -5,6 +5,8 @@ using FFOracle.Services;
 using Microsoft.AspNetCore.Mvc;
 using Square;
 using Supabase;
+using Supabase.Gotrue;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
@@ -17,11 +19,11 @@ public class PlayerComparisonController : ControllerBase
 {
     private static readonly string[] FLEX_POSITIONS = new[] { "RB", "WR", "TE" };
 
-    private readonly Client _supabase;
+    private readonly Supabase.Client _supabase;
     private readonly ChatGPTService _chatService;
     private readonly SupabaseAuthService _authService;
 
-    public PlayerComparisonController(Client supabase, ChatGPTService chatService, SupabaseAuthService authService)
+    public PlayerComparisonController(Supabase.Client supabase, ChatGPTService chatService, SupabaseAuthService authService)
     {
         _supabase = supabase;
         _chatService = chatService;
@@ -38,24 +40,6 @@ public class PlayerComparisonController : ControllerBase
 
         return JsonSerializer.Deserialize<T>(json);
     }
-
-    //// helper function for getting start count by position
-    //private int GetStartCountForPosition(string position, RosterSettingsDto rosterSettings)
-    //{
-    //    int startCount = position switch
-    //    {
-    //        "QB" => rosterSettings.QbCount,
-    //        "RB" => rosterSettings.RbCount,
-    //        "WR" => rosterSettings.WrCount,
-    //        "TE" => rosterSettings.TeCount,
-    //        "FLEX" => rosterSettings.FlexCount,
-    //        "K" => rosterSettings.KCount,
-    //        "DEF" => rosterSettings.DefCount,
-    //        _ => 1
-    //    };
-
-    //    return startCount;
-    //}
 
     // helper function for creating new prompt
     private string BuildAiPrompt(
@@ -112,9 +96,6 @@ public class PlayerComparisonController : ControllerBase
         ScoringSettingsDto scoringSettings
     ) where T : IPlayerData
     {
-        //var list = players.ToList();
-        //int startCount = GetStartCountForPosition(position, rosterSettings);
-
         //Verify that the players being compared can occupy the same role
         bool normalMatch = player1.Player.Position.Equals(position)
                    && player2.Player.Position.Equals(position);
@@ -156,17 +137,6 @@ public class PlayerComparisonController : ControllerBase
                  }
              };
         }
-        
-            //if (list.Count <= startCount)
-            //{
-            //    return list.Select(p => new AiPositionRecommendation
-            //    {
-            //        Position = position,
-            //        PlayerId = p.Player.Id,
-            //        Picked = true,
-            //        Reasoning = $"{p.Player.Name} is one of {list.Count} total {position}s on your roster in a league that allows {startCount} {position}s. By default, this means to maximize your score for this week, {p.Player.Name} is a must start.{(list.Count < startCount ? $" Strongly consider adding {startCount - list.Count} more {position}s to maximize your roster." : "")}"
-            //    }).ToList();
-            //}
 
         var query = BuildAiPrompt(position, player1, player2, scoringSettings);
         var aiResponse = await _chatService.SendMessageAsync(query);
@@ -177,10 +147,10 @@ public class PlayerComparisonController : ControllerBase
         ) ?? [];
     }
 
-    [HttpGet("{playerId1}/{playerId2}/{position}")]
+    [HttpGet("{inputId1}/{inputId2}/{position}")]
     public async Task<IActionResult> GetPrediction(
-        string playerId1, 
-        string playerId2,
+        string inputId1, 
+        string inputId2,
         string position
         ){
         try
@@ -207,223 +177,253 @@ public class PlayerComparisonController : ControllerBase
                 return BadRequest("Invalid leagueId");
             }
 
-            //retrieve the data for the two players being compared
-            var getPlayer1DataRes = await _supabase
-                .Rpc("get_player_data", new { player_id = playerId1 });
-            string player1String = getPlayer1DataRes.Content.ToString();
+            //Start by determining if this is a player comparison, a team comparison,
+            // or an invalid comparison (player x team or nonexistent player/team).
+            //If the comparison is valid, either call the player comparison methor or
+            // the team comparison method based on the id type given.
+            var id1TypeRes = await _supabase
+                .Rpc("is_offensePlayer_or_defenseTeam", new { input_id = inputId1 });
+            var id1TypeDTO = JsonSerializer.Deserialize<MemberIdType>(id1TypeRes.Content.ToString());
+            int id1Type = id1TypeDTO.Type;
 
-            var getPlayer2DataRes = await _supabase
-                .Rpc("get_player_data", new { player_id = playerId2 });
-            string player2String = getPlayer2DataRes.Content.ToString();
+            var id2TypeRes = await _supabase
+                .Rpc("is_offensePlayer_or_defenseTeam", new { input_id = inputId2 });
+            var id2TypeDTO = JsonSerializer.Deserialize<MemberIdType>(id2TypeRes.Content.ToString());
+            int id2Type = id2TypeDTO.Type;
 
-            //deserialize the player data to DTOs
-            var player1Data = JsonSerializer.Deserialize<PlayerDto>(player1String);
-            var player2Data = JsonSerializer.Deserialize<PlayerDto>(player2String);
-            if(player1Data == null)
+            if (id1Type != id2Type) //if the two id types are not the same, do not compare
             {
-                throw new Exception("First player data is null");
-            } else if (player2Data == null)
-            {
-                throw new Exception("Second player data is null");
+                var result = new AiRosterRecommendation();
+                result.Recommendations = new List<AiPositionRecommendation>()
+                {
+                    new AiPositionRecommendation
+                    {
+                        Position = position,
+                        PlayerId = inputId1,
+                        Picked = false,
+                        Reasoning = $"You've attempted to compare this player to another player/team of a different position. Try comparing two players/teams that can occupy the same position on your roster."
+                    }
+                };
+                return Ok(result);
             }
-
-            //// retrieve user's roster, league settings, and scoring settings for the league
-            //var getUserLeagueDataRes = await _supabase
-            //    .Rpc("get_user_league_data", new { _user_id = userId, _league_id = leagueId });
-
-            //// Assume the RPC returns a string in getUserLeagueDataRes.Models[0] (check your SDK)
-            //string jsonString = getUserLeagueDataRes.Content.ToString(); // or .Data[0]
-
-            //Retrieve the league's settings
-            var scoringSettingsRes = await _supabase
-                .Rpc("get_scoring_settings", new { league_id = leagueId });
-            var scoringSettingsString = scoringSettingsRes.Content.ToString();
-            var scoringSettings = JsonSerializer.Deserialize<ScoringSettingsDto>(scoringSettingsString);
-
-            //// parse roster settings
-            //var rosterSettings = leagueData.RosterSettings;
-
-            //// parse scoring settings
-            //var scoringSettings = leagueData.ScoringSettings;
-
-            //// split up roster by position
-            //var roster = leagueData.Players;
-
-            // recommendations to be filled
-            var aiRosterRecommendation = new AiRosterRecommendation();
-
-            // prune unneeded data by position
-            List<AiPositionRecommendation> recs = new List<AiPositionRecommendation>();
-            IPlayerData cleanP1Data = null;
-            IPlayerData cleanP2Data = null;
-            switch (position)
+            else if (id1Type == 0)  //if either the first or second id is unrecognized, do not compare
             {
-                case "QB":
-                    cleanP1Data = CloneClean<UserLeagueQBData>(player1Data);
-                    cleanP2Data = CloneClean<UserLeagueQBData>(player2Data);
-                    break;
-                case "RB":
-                    cleanP1Data = CloneClean<UserLeagueFlexData>(player1Data);
-                    cleanP2Data = CloneClean<UserLeagueFlexData>(player2Data);
-                    break;
-                case "WR":
-                    cleanP1Data = CloneClean<UserLeagueFlexData>(player1Data);
-                    cleanP2Data = CloneClean<UserLeagueFlexData>(player2Data);
-                    break;
-                case "TE":
-                    cleanP1Data = CloneClean<UserLeagueFlexData>(player1Data);
-                    cleanP2Data = CloneClean<UserLeagueFlexData>(player2Data);
-                    break;
-                case "K":
-                    cleanP1Data = CloneClean<UserLeagueKData>(player1Data);
-                    cleanP2Data = CloneClean<UserLeagueKData>(player2Data);
-                    break;
-                case "FLEX":
-                    cleanP1Data = CloneClean<UserLeagueFlexData>(player1Data);
-                    cleanP2Data = CloneClean<UserLeagueFlexData>(player2Data);
-                    break;
+                var result = new AiRosterRecommendation();
+                result.Recommendations = new List<AiPositionRecommendation>()
+                {
+                    new AiPositionRecommendation
+                    {
+                        Position = position,
+                        PlayerId = inputId1,
+                        Picked = false,
+                        Reasoning = $"This player either could not be found in our database or cannot be picked for your roster."
+                    }
+                };
+                return Ok(result);
             }
-            recs = await GeneratePositionRecommendations(position, cleanP1Data, cleanP2Data, scoringSettings);
-            aiRosterRecommendation.Recommendations = recs;
-
-            //var qbList = roster
-            //    .Where(p => p.Player.Position == "QB")
-            //    .Select(CloneClean<UserLeagueQBData>)
-            //    .ToList();
-
-            //var rbList = roster
-            //    .Where(p => p.Player.Position == "RB")
-            //    .Select(CloneClean<UserLeagueFlexData>)
-            //    .ToList();
-
-            //var wrList = roster
-            //    .Where(p => p.Player.Position == "WR")
-            //    .Select(CloneClean<UserLeagueFlexData>)
-            //    .ToList();
-
-            //var teList = roster
-            //    .Where(p => p.Player.Position == "TE")
-            //    .Select(CloneClean<UserLeagueFlexData>)
-            //    .ToList();
-
-            //var kList = roster
-            //    .Where(p => p.Player.Position == "K")
-            //    .Select(CloneClean<UserLeagueKData>)
-            //    .ToList();
-
-            //var defList = leagueData.Defenses?
-            //    .Select(CloneClean<DefenseDto>)
-            //    .ToList() ?? new List<DefenseDto>();
-
-            // aggregate pruned data by position
-            //var positionMap = new Dictionary<string, IEnumerable<IPlayerData>>
-            //{
-            //    { "QB", qbList },
-            //    { "RB", rbList },
-            //    { "WR", wrList },
-            //    { "TE", teList },
-            //    { "K", kList }
-            //};
-
-            //// recommendations to be filled
-            //var aiRosterRecommendation = new AiRosterRecommendation();
-
-            //// for each offensive position group, generate AI predictions
-            //foreach (var kvp in positionMap)
-            //{
-            //    var recs = await GeneratePositionRecommendations(
-            //        kvp.Key,
-            //        kvp.Value,
-            //        rosterSettings,
-            //        scoringSettings
-            //    );
-
-            //    aiRosterRecommendation.Recommendations.AddRange(recs);
-            //}
-
-            //// generate AI predictions for FLEX (RB/WR/TE that have not already been picked)
-            //var pickedIds = aiRosterRecommendation.Recommendations
-            //    .Where(r => FLEX_POSITIONS.Contains(r.Position) && r.Picked)
-            //    .Select(r => r.PlayerId)
-            //    .ToHashSet();
-
-            //// build a combined list of RB/WR/TE from original roster
-            //var flexPool = new List<IPlayerData>();
-            //flexPool.AddRange(rbList);
-            //flexPool.AddRange(wrList);
-            //flexPool.AddRange(teList);
-
-            //// filter out already picked players
-            //var flexCandidates = flexPool
-            //    .Where(p => !pickedIds.Contains(p.Player.Id))
-            //    .ToList();
-
-            //if (flexCandidates.Any())
-            //{
-            //    var flexRecs = await GeneratePositionRecommendations(
-            //        "FLEX",
-            //        flexCandidates,
-            //        rosterSettings,
-            //        scoringSettings
-            //    );
-
-            //    aiRosterRecommendation.Recommendations.AddRange(flexRecs);
-            //}
-
-            //// generate AI predictions for DEF
-            //if (defList.Count > 0)
-            //{
-            //    if (defList.Count <= rosterSettings.DefCount)
-            //    {
-            //        // by default the defenses on the inputted roster must start
-            //        foreach (var defData in defList)
-            //        {
-            //            var defaultDefRecommendation = new AiPositionRecommendation
-            //            {
-            //                Position = "DEF",
-            //                PlayerId = defData.Team.Id,
-            //                Picked = true,
-            //                Reasoning = $"{defData.Team.Name} is one of {defList.Count} total DEFs on your roster in a league that allows {rosterSettings.DefCount} DEFs. By default, this means to maximize your score for this week, {defData.Team.Name} is a must start.{(defList.Count < rosterSettings.DefCount ? $" Strongly consider adding {rosterSettings.DefCount - defList.Count} more DEFs to maximize your roster." : "")}"
-            //            };
-            //            aiRosterRecommendation.Recommendations.Add(defaultDefRecommendation);
-            //        }
-            //    }
-            //    else
-            //    {
-            //        string defQuery = BuildAiPrompt(
-            //            "DEF",
-            //            defList,
-            //            rosterSettings,
-            //            scoringSettings
-            //        );
-
-            //        var aiDefResponse = await _chatService.SendMessageAsync(defQuery);
-
-            //        // deserialize recommendation and add it to final output
-            //        var defRecommendations = JsonSerializer.Deserialize<List<AiPositionRecommendation>>(
-            //            aiDefResponse,
-            //            new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-            //        );
-
-            //        // validate and add recommendations
-            //        foreach (var recommendation in defRecommendations ?? [])
-            //        {
-            //            if (recommendation != null)
-            //            {
-            //                aiRosterRecommendation.Recommendations.Add(recommendation);
-            //            }
-            //        }
-            //    }
-            //}
-
-            // decrement the remaining tokens for the user after successful operation ONLY
-            await _authService.DecrementUserTokens(userId);
-
-            return Ok(aiRosterRecommendation);
+            else if (id2Type == 0)
+            {
+                var result = new AiRosterRecommendation();
+                result.Recommendations = new List<AiPositionRecommendation>()
+                {
+                    new AiPositionRecommendation
+                    {
+                        Position = position,
+                        PlayerId = inputId2,
+                        Picked = false,
+                        Reasoning = $"This player either could not be found in our database or cannot be picked for your roster."
+                    }
+                };
+                return Ok(result);
+            }
+            else if (id1Type == id2Type && id1Type == 1 && position.Equals("DEF"))  //if the request tries to compare players for defense, do not compare
+            {
+                var result = new AiRosterRecommendation();
+                result.Recommendations = new List<AiPositionRecommendation>()
+                {
+                    new AiPositionRecommendation
+                    {
+                        Position = position,
+                        PlayerId = inputId1,
+                        Picked = false,
+                        Reasoning = $"You have selected players to compare for a defense position, but players cannot hold defense positions."
+                    }
+                };
+                return Ok(result);
+            }
+            else if (id1Type == id2Type && id1Type == 2 && !position.Equals("DEF"))
+            {
+                var result = new AiRosterRecommendation();
+                result.Recommendations = new List<AiPositionRecommendation>()
+                {
+                    new AiPositionRecommendation
+                    {
+                        Position = position,
+                        PlayerId = inputId1,
+                        Picked = false,
+                        Reasoning = $"You have selected teams to compare for an offense position, but teams cannot hold offense positions."
+                    }
+                };
+                return Ok(result);
+            }
+            else if (id1Type == 1 && id2Type == 1)
+            {
+                var ret = await GetPlayerPrediction(inputId1, inputId2, position, leagueId, userId);
+                return Ok(ret);
+            }
+            else if (id1Type == 2 && id2Type == 2)
+            {
+                var ret = await GetTeamPrediction(inputId1, inputId2, leagueId, userId);
+                return Ok(ret);
+            }
+            else
+            {
+                throw new Exception($"Error processing player/team ids {inputId1} and {inputId2}");
+            }
+            
         }
         catch (Exception ex)
         {
             return StatusCode(500, $"Error generating AI predictions: {ex.Message}");
         }
+    }
+
+    //handles getting prediction info for offense players
+    [NonAction]
+    public async Task<AiRosterRecommendation> GetPlayerPrediction(
+        string playerId1,
+        string playerId2,
+        string position,
+        Guid leagueId,
+        Guid? userId
+        )
+    {
+        //retrieve the data for the two players being compared
+        var getPlayer1DataRes = await _supabase
+            .Rpc("get_player_data", new { player_id = playerId1 });
+        string player1String = getPlayer1DataRes.Content.ToString();
+
+        var getPlayer2DataRes = await _supabase
+            .Rpc("get_player_data", new { player_id = playerId2 });
+        string player2String = getPlayer2DataRes.Content.ToString();
+
+        //deserialize the player data to DTOs
+        var player1Data = JsonSerializer.Deserialize<PlayerDto>(player1String);
+        var player2Data = JsonSerializer.Deserialize<PlayerDto>(player2String);
+        if (player1Data == null)
+        {
+            throw new Exception("First player data is null");
+        }
+        else if (player2Data == null)
+        {
+            throw new Exception("Second player data is null");
+        }
+
+        //Retrieve the league's settings
+        var scoringSettingsRes = await _supabase
+            .Rpc("get_scoring_settings", new { league_id = leagueId });
+        var scoringSettingsString = scoringSettingsRes.Content.ToString();
+        var scoringSettings = JsonSerializer.Deserialize<ScoringSettingsDto>(scoringSettingsString);
+
+        // recommendations to be filled
+        var aiRosterRecommendation = new AiRosterRecommendation();
+
+        // prune unneeded data by position
+        List<AiPositionRecommendation> recs = new List<AiPositionRecommendation>();
+        IPlayerData cleanP1Data = null;
+        IPlayerData cleanP2Data = null;
+        switch (position)
+        {
+            case "QB":
+                cleanP1Data = CloneClean<UserLeagueQBData>(player1Data);
+                cleanP2Data = CloneClean<UserLeagueQBData>(player2Data);
+                break;
+            case "RB":
+                cleanP1Data = CloneClean<UserLeagueFlexData>(player1Data);
+                cleanP2Data = CloneClean<UserLeagueFlexData>(player2Data);
+                break;
+            case "WR":
+                cleanP1Data = CloneClean<UserLeagueFlexData>(player1Data);
+                cleanP2Data = CloneClean<UserLeagueFlexData>(player2Data);
+                break;
+            case "TE":
+                cleanP1Data = CloneClean<UserLeagueFlexData>(player1Data);
+                cleanP2Data = CloneClean<UserLeagueFlexData>(player2Data);
+                break;
+            case "K":
+                cleanP1Data = CloneClean<UserLeagueKData>(player1Data);
+                cleanP2Data = CloneClean<UserLeagueKData>(player2Data);
+                break;
+            case "FLEX":
+                cleanP1Data = CloneClean<UserLeagueFlexData>(player1Data);
+                cleanP2Data = CloneClean<UserLeagueFlexData>(player2Data);
+                break;
+        }
+        recs = await GeneratePositionRecommendations(position, cleanP1Data, cleanP2Data, scoringSettings);
+        aiRosterRecommendation.Recommendations = recs;
+
+        // decrement the remaining tokens for the user after successful operation ONLY
+        await _authService.DecrementUserTokens(userId);
+
+        return aiRosterRecommendation;
+    }
+
+    //handles getting prediction info for defense teams
+    [NonAction]
+    public async Task<AiRosterRecommendation> GetTeamPrediction(
+        string teamId1,
+        string teamId2,
+        Guid leagueId,
+        Guid? userId
+        )
+    {
+        //retrieve the data for the two teams being compared
+        var getTeam1DataRes = await _supabase
+            .Rpc("get_team_data", new { _team_id = teamId1 });
+        string team1String = getTeam1DataRes.Content.ToString();
+
+        var getTeam2DataRes = await _supabase
+            .Rpc("get_team_data", new { _team_id = teamId2 });
+        string team2String = getTeam2DataRes.Content.ToString();
+
+        //deserialize the team data to DTOs
+        var team1Data = JsonSerializer.Deserialize<DefenseDto>(team1String);
+        var team2Data = JsonSerializer.Deserialize<DefenseDto>(team2String);
+        if (team1Data == null)
+        {
+            throw new Exception("First team data is null");
+        }
+        else if (team2Data == null)
+        {
+            throw new Exception("Second team data is null");
+        }
+
+        //Retrieve the league's settings
+        var scoringSettingsRes = await _supabase
+            .Rpc("get_scoring_settings", new { league_id = leagueId });
+        var scoringSettingsString = scoringSettingsRes.Content.ToString();
+        var scoringSettings = JsonSerializer.Deserialize<ScoringSettingsDto>(scoringSettingsString);
+
+        // recommendations to be filled
+        var aiRosterRecommendation = new AiRosterRecommendation();
+
+        // prune unneeded data by position
+        List<AiPositionRecommendation> recs = new List<AiPositionRecommendation>();
+        DefenseDto cleanT1Data = CloneClean<DefenseDto>(team1Data);
+        DefenseDto cleanT2Data = CloneClean<DefenseDto>(team2Data);
+
+        var query = BuildAiPrompt("DEF", cleanT1Data, cleanT2Data, scoringSettings);
+        var aiResponse = await _chatService.SendMessageAsync(query);
+
+        aiRosterRecommendation.Recommendations = 
+            JsonSerializer.Deserialize<List<AiPositionRecommendation>>(
+                aiResponse,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+            ) ?? [];
+
+        // decrement the remaining tokens for the user after successful operation ONLY
+        await _authService.DecrementUserTokens(userId);
+
+        return aiRosterRecommendation;
     }
 }
