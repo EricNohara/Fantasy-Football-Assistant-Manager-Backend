@@ -77,17 +77,38 @@ public class UsersController : ControllerBase
                 return Unauthorized("Invalid token");
             }
 
+            // fetch user
+            var result = await _supabase
+                .From<Models.Supabase.User>()
+                .Where(u => u.Id == userId)
+                .Single();
+
+            if (result == null)
+            {
+                return NotFound("User not found");
+            }
+
+            // Update only non-null fields (patch style)
+            if (!string.IsNullOrWhiteSpace(req.Fullname))
+                result.Fullname = req.Fullname;
+
+            if (!string.IsNullOrWhiteSpace(req.PhoneNumber))
+                result.PhoneNumber = req.PhoneNumber;
+
+            // booleans and nums update directly
+            result.AllowEmails = req.AllowEmails;
+            result.TokensLeft = req.TokensLeft;
+
             // perform update in supabase db
             await _supabase
                 .From<Models.Supabase.User>()
-                .Where(u => u.Id == userId)
-                .Update();
+                .Update(result);
 
             return Ok(new { message = "User updated successfully" });
         }
         catch (Exception ex)
         {
-            return StatusCode(500, $"Error deleting user: {ex.Message}");
+            return StatusCode(500, $"Error updating user: {ex.Message}");
         }
     }
 
