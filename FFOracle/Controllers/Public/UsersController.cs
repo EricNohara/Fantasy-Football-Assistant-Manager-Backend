@@ -65,6 +65,32 @@ public class UsersController : ControllerBase
         }
     }
 
+    // UPDATE
+    [HttpPost]
+    public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequest req)
+    {
+        try
+        {
+            var userId = await _authService.AuthorizeUser(Request);
+            if (userId == Guid.Empty)
+            {
+                return Unauthorized("Invalid token");
+            }
+
+            // perform update in supabase db
+            await _supabase
+                .From<Models.Supabase.User>()
+                .Where(u => u.Id == userId)
+                .Update();
+
+            return Ok(new { message = "User updated successfully" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error deleting user: {ex.Message}");
+        }
+    }
+
     // DELETE
     [HttpDelete]
     public async Task<IActionResult> Delete()
