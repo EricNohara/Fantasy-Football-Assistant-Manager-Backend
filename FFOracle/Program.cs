@@ -51,6 +51,7 @@ builder.Services.AddCors(options =>
 // External services
 builder.Services.AddHttpClient<NflVerseService>();
 builder.Services.AddScoped<ChatGPTService>();
+builder.Services.AddScoped<EspnService>();
 
 // App-specific services
 builder.Services.AddScoped<SupabaseAuthService>();
