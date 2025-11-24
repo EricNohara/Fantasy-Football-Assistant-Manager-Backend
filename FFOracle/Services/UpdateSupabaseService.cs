@@ -1,6 +1,5 @@
 ﻿using FFOracle.Models.Supabase;
 using FFOracle.Utils;
-using Square;
 using Supabase;
 
 namespace FFOracle.Services;
