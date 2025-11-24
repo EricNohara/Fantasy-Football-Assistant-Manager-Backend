@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Stripe;
 using static Microsoft.IO.RecyclableMemoryStreamManager;
+using Supabase;
 
 namespace FFOracle.Controllers;
 
@@ -11,12 +12,18 @@ public class StripeWebhookController : Controller
 
     private readonly ILogger<StripeWebhookController> _logger;  //a logger I'll use to indicate successful payments
     private readonly IConfiguration _config;    //accesses appsettings info
+    private readonly Client _supabase;  //database to update token counts
 
     //constructor to initialize the stored logger and config
-    public StripeWebhookController(ILogger<StripeWebhookController> logger, IConfiguration config)
+    public StripeWebhookController(
+        ILogger<StripeWebhookController> logger,
+        IConfiguration config,
+        Client supabase
+        )
     {
         _logger = logger;
         _config = config;
+        _supabase = supabase;
     }
 
     [HttpPost("check-payment-completion")]
@@ -25,9 +32,7 @@ public class StripeWebhookController : Controller
         //Read the request body
         var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
 
-        //retrieve the webhook secret.
-        //As of now, WE HAVE NO WEBHOOK ENDPOINT WITH STRIPE. That requires a proper public URL for our
-        // backend. I have used the stripe CLI to make a temporary bridge from which we can get responses.
+        //retrieve the webhook secret
         var webhookSecret = _config["Stripe:WebhookSecret"];
         //verify that it's actually there
         if (string.IsNullOrEmpty(webhookSecret))
@@ -40,7 +45,7 @@ public class StripeWebhookController : Controller
         {
             //Parse the message into an Event object and ensure it's a valid stripe message
             var stripeEvent = EventUtility.ConstructEvent(
-                json,   
+                json,
                 Request.Headers["Stripe-Signature"],    //use this to verify that it has the stripe header
                 webhookSecret
             );
@@ -50,10 +55,18 @@ public class StripeWebhookController : Controller
             {
                 case "payment_intent.succeeded":
                     {
-                        //for now, just log the success
+                        //log the success
                         var paymentIntent = stripeEvent.Data.Object as PaymentIntent;
-                        _logger.LogInformation("PaymentIntent succeeded: {Id}, amount: {Amount}", paymentIntent.Id, paymentIntent.Amount);
-                        //This is where DB would be updated
+                        _logger.LogInformation(
+                            $"PaymentIntent succeeded: {paymentIntent.Id}, amount: {paymentIntent.Amount}, User: {paymentIntent.Metadata["userId"]}"
+                            );
+
+                        //add the tokens to the account
+                        await _supabase
+                            .Rpc(
+                            "add_tokens_to_account",
+                            new { _user_id = paymentIntent.Metadata["userId"], _token_num = paymentIntent.Metadata["tokens"] }
+                            );
                         break;
                     }
 
@@ -66,8 +79,8 @@ public class StripeWebhookController : Controller
                         break;
                     }
                 //I can add other events here as needed, but for now we only need those two
-                
-                    //Log any event aside from the ones expected
+
+                //Log any event aside from the ones expected
                 default:
                     _logger.LogInformation("Unhandled Stripe event type: {Type}", stripeEvent.Type);
                     break;
