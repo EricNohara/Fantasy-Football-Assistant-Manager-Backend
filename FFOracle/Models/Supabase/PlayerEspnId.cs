@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace FFOracle.Models.Supabase;
 
-[Table("player_espn_id")]
+[Table("player_espn_ids")]
 public class PlayerEspnId: BaseModel
 {
     [PrimaryKey("player_id", false)]

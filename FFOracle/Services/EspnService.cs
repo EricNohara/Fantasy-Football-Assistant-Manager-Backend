@@ -1,6 +1,10 @@
-﻿using FFOracle.Models.Supabase;
-using FFOracle.DTOs.Responses;
+﻿using FFOracle.DTOs.Responses;
+using FFOracle.Models.Supabase;
 using Supabase;
+using System.Text.Json;
+using System.Collections.Concurrent;
+using System.Text.Json.Nodes;
+
 
 namespace FFOracle.Services;
 
@@ -8,6 +12,10 @@ public class EspnService
 {
     private const string BASE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/athletes";
     private readonly HashSet<string> OFFENSIVE_POSITIONS = new(new[] { "QB", "RB", "WR", "TE", "K" });
+
+    // Concurrency limit for ESPN detail calls
+    private const int MAX_PARALLEL = 32;
+    private readonly SemaphoreSlim _throttle = new(MAX_PARALLEL);
 
     private readonly Client _supabaseClient;
     private readonly HttpClient _httpClient;
@@ -20,41 +28,64 @@ public class EspnService
 
     public async Task SyncAllPlayersAsync()
     {
+        // Load all local players once
+        var localPlayers = await _supabaseClient
+            .From<Player>()
+            .Range(0, 9999)
+            .Get();
+
+        var localLookup = localPlayers.Models
+            .ToDictionary(
+                p => $"{p.Name}|{p.Position}",
+                p => p.Id,
+                StringComparer.OrdinalIgnoreCase
+            );
+
         int page = 1;
-        while(true)
+
+        while (true)
         {
-            var url = $"{BASE_URL}?limit=100&active=true&page={page}";
-            var response = await _httpClient.GetFromJsonAsync<EspnAthleteListResponse>(url) ?? new EspnAthleteListResponse();
+            var url = $"{BASE_URL}?limit=1000&active=true&page={page}";
+            var response = await _httpClient.GetFromJsonAsync<EspnAthleteListResponse>(url);
 
-            if (response.Items.Count == 0)
-            {
-                // no more players
+            if (response == null || response.Items.Count == 0)
                 break;
-            }
 
-            foreach (var item in response.Items)
+            // Fetch all ESPN detail pages with concurrency cap
+            var detailTasks = response.Items.Select(async item =>
             {
-                var detail = await _httpClient.GetFromJsonAsync<EspnAthleteDetailResponse>(item.Ref);
+                await _throttle.WaitAsync();
+                try
+                {
+                    return await _httpClient.GetFromJsonAsync<EspnAthleteDetailResponse>(item.Ref);
+                }
+                catch
+                {
+                    return null;
+                }
+                finally
+                {
+                    _throttle.Release();
+                }
+            }).ToArray();
 
+            var details = await Task.WhenAll(detailTasks);
+
+            foreach (var detail in details)
+            {
                 if (detail?.Position?.Abbreviation == null ||
-                    !OFFENSIVE_POSITIONS.Contains(detail.Position.Abbreviation) ||
-                    string.IsNullOrWhiteSpace(detail.Id)
-                )
-                {
+                    !OFFENSIVE_POSITIONS.Contains(detail.Position.Abbreviation))
                     continue;
-                }
 
-                var mappedPlayerId = await MapEspnToLocalPlayer(detail.FullName, detail.Position.Abbreviation);
+                var key = $"{detail.FullName}|{detail.Position.Abbreviation}";
 
-                if (mappedPlayerId == null)
-                {
+                if (!localLookup.TryGetValue(key, out var localPlayerId))
                     continue;
-                }
 
-                // upsert player espn id in to player_espn_ids table
+                // Upsert row-by-row
                 var payload = new PlayerEspnId
                 {
-                    PlayerId = mappedPlayerId,
+                    PlayerId = localPlayerId,
                     EspnId = detail.Id
                 };
 
@@ -65,15 +96,5 @@ public class EspnService
 
             page++;
         }
-    }
-
-    private async Task<string?> MapEspnToLocalPlayer(string fullName, string position)
-    {
-        var result = await _supabaseClient
-            .From<Player>()
-            .Where(x => x.Name == fullName && x.Position == position)
-            .Single();
-
-        return result?.Id;
     }
 }
