@@ -22,22 +22,9 @@ public class NflVerseService
 
     private const string WEEKLY_GAME_DATA_URL = "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.csv.gz";
 
-    // defensive positions (we only store offensive players)
-    private HashSet<string> DEFENSIVE_POSITIONS = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    private HashSet<string> OFFENSIVE_POSITIONS = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
-        "DL",  // Defensive Lineman (general)
-        "DE",  // Defensive End
-        "DT",  // Defensive Tackle
-        "NT",  // Nose Tackle
-        "LB",  // Linebacker (general)
-        "ILB", // Inside Linebacker
-        "MLB", // Middle Linebacker
-        "OLB", // Outside Linebacker
-        "DB",  // Defensive Back (general)
-        "CB",  // Cornerback
-        "S",   // Safety (general)
-        "FS",  // Free Safety
-        "SS"   // Strong Safety
+        "QB", "WR", "RB", "TE", "K"
     };
 
     // current valid NFL teams
@@ -120,7 +107,7 @@ public class NflVerseService
         // return only offensive players
         return await LoadCsvDataAsync<Player, PlayerMap>(
             SEASON_PLAYER_STATS_URL,
-            p => !string.IsNullOrWhiteSpace(p.Id) && !DEFENSIVE_POSITIONS.Contains(p.Position)
+            p => !string.IsNullOrWhiteSpace(p.Id) && OFFENSIVE_POSITIONS.Contains(p.Position)
         );
     }
 
@@ -129,7 +116,7 @@ public class NflVerseService
         // return only offensive players
         return await LoadCsvDataAsync<PlayerStatCsv, PlayerStatCsvMap>(
             SEASON_PLAYER_STATS_URL,
-            p => !string.IsNullOrWhiteSpace(p.PlayerId) && !DEFENSIVE_POSITIONS.Contains(p.Position)
+            p => !string.IsNullOrWhiteSpace(p.PlayerId) && OFFENSIVE_POSITIONS.Contains(p.Position)
         );
     }
 
@@ -138,7 +125,7 @@ public class NflVerseService
         // return only offensive players
         return await LoadCsvDataAsync<PlayerStatCsv, PlayerStatCsvMap>(
             WEEKLY_PLAYER_STATS_URL,
-            p => !string.IsNullOrWhiteSpace(p.PlayerId) && !DEFENSIVE_POSITIONS.Contains(p.Position)
+            p => !string.IsNullOrWhiteSpace(p.PlayerId) && OFFENSIVE_POSITIONS.Contains(p.Position)
         );
     }
 
