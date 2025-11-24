@@ -55,6 +55,7 @@ builder.Services.AddScoped<EspnService>();
 
 // App-specific services
 builder.Services.AddScoped<SupabaseAuthService>();
+builder.Services.AddScoped<EmailService>();
 
 #endregion
 
