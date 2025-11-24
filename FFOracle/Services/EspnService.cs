@@ -1,16 +1,13 @@
 ﻿using FFOracle.DTOs.Responses;
 using FFOracle.Models.Supabase;
 using Supabase;
-using System.Text.Json;
-using System.Collections.Concurrent;
-using System.Text.Json.Nodes;
-
 
 namespace FFOracle.Services;
 
 public class EspnService
 {
-    private const string BASE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/athletes";
+    private const string GET_IDS_BASE_URL = "https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/athletes";
+    private const string GET_ARTICLES_BASE_URL = "https://site.api.espn.com/apis/fantasy/v2/games/ffl/news/players";
     private readonly HashSet<string> OFFENSIVE_POSITIONS = new(new[] { "QB", "RB", "WR", "TE", "K" });
 
     // Concurrency limit for ESPN detail calls
@@ -45,7 +42,7 @@ public class EspnService
 
         while (true)
         {
-            var url = $"{BASE_URL}?limit=1000&active=true&page={page}";
+            var url = $"{GET_IDS_BASE_URL}?limit=1000&active=true&page={page}";
             var response = await _httpClient.GetFromJsonAsync<EspnAthleteListResponse>(url);
 
             if (response == null || response.Items.Count == 0)
@@ -96,5 +93,32 @@ public class EspnService
 
             page++;
         }
+    }
+
+    public async Task<List<EspnNewsItem>> GetArticlesForPlayerAsync(string playerId)
+    {
+        // get espn id for player
+        var espnIdRecord = await _supabaseClient
+            .From<PlayerEspnId>()
+            .Where(p => p.PlayerId == playerId)
+            .Single();
+
+        if (espnIdRecord == null)
+        {
+            return [];
+        }
+
+        // fetch articles from espn
+        var url = $"{GET_ARTICLES_BASE_URL}?limit=50&playerId={espnIdRecord.EspnId}";
+        var response = await _httpClient.GetFromJsonAsync<EspnNewsResponse>(url);
+        List<EspnNewsItem> articles = response?.Feed ?? [];
+
+        // attach player id to each article
+        foreach (var article in articles)
+        {
+            article.LocalPlayerId = playerId;
+        }
+
+        return articles;
     }
 }
