@@ -25,7 +25,7 @@ public class EspnImage
 
 public class EspnNewsLinks
 {
-    public EspnNewsWebLink? Mobile { get; set; }
+    public EspnNewsWebLink? Web { get; set; }
 }
 
 public class EspnNewsWebLink
