@@ -100,7 +100,7 @@ public class EspnController: ControllerBase
                 .ToList();
 
             // return all articles
-            return Ok(articles);
+            return Ok(uniqueArticles);
         }
         catch (Exception ex)
         {
