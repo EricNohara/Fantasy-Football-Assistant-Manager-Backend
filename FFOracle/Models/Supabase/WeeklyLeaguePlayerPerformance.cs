@@ -27,11 +27,15 @@ public class WeeklyLeaguePlayerPerformance: BaseModel
     [JsonPropertyName("actual_fpts")]
     public double ActualFpts { get; set; }
 
-    [Column("max_fpts")]
-    [JsonPropertyName("max_fpts")]
-    public double MaxFpts { get; set; }
+    [Column("picked")]
+    [JsonPropertyName("picked")]
+    public bool Picked { get; set; }
 
-    [Column("was_correct")]
-    [JsonPropertyName("was_correct")]
-    public bool WasCorrect { get; set; }
+    [Column("position_rank")]
+    [JsonPropertyName("position_rank")]
+    public int PositionRank { get; set; }
+
+    [Column("overall_rank")]
+    [JsonPropertyName("overall_rank")]
+    public int OverallRank { get; set; }
 }

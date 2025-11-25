@@ -12,12 +12,14 @@ public class AutoUpdateController: ControllerBase
     private readonly NflVerseService _nflVerseService;
     private readonly Client _supabase;
     private readonly UpdateSupabaseService _updateSupabaseService;
+    private readonly WeeklyLeaguePerformanceService _weeklyLeaguePerformanceService;
 
     public AutoUpdateController(NflVerseService nflVerseService, Client supabase)
     {
         _nflVerseService = nflVerseService;
         _supabase = supabase;
         _updateSupabaseService = new UpdateSupabaseService(_nflVerseService, _supabase);
+        _weeklyLeaguePerformanceService = new WeeklyLeaguePerformanceService(_supabase);
     }
 
     // PUT route for weekly updates
@@ -43,6 +45,9 @@ public class AutoUpdateController: ControllerBase
 
             // update the games this week (delete and add new games)
             await _updateSupabaseService.UpdateGamesThisWeekAsync();
+
+            // update the league performances
+            await _weeklyLeaguePerformanceService.UpsertAllLeaguesWeeklyPerformanceAsync();
 
             return Ok();
         }
