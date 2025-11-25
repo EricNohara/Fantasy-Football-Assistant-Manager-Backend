@@ -21,6 +21,36 @@ public class UpdateUserLeagueController : Controller
         _authService = authService;
     }
 
+    public class LeagueNameArg
+    {
+        public string leagueName { get; set; }
+    }
+
+    //add league route
+    [HttpPut("create")]
+    public async Task<IActionResult> CreateLeague([FromBody] LeagueNameArg leagueName)
+    {
+        try
+        {
+            // check user is authenticated
+            var userId = await _authService.AuthorizeUser(Request);
+            if (userId == null)
+            {
+                return Unauthorized(new { error = "User not authenticated" });
+            }
+
+            //Add a new empty league with a set of blank settings
+            await _supabase
+                .Rpc("add_league", new { _user_id = userId, _league_name = leagueName.leagueName });
+
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Error authenticating user", details = ex.Message });
+        }
+    }
+
     //delete league route
     [HttpDelete]
     public async Task<IActionResult> DeleteLeague(Guid leagueId)
