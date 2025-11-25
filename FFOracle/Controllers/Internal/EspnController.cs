@@ -93,6 +93,12 @@ public class EspnController: ControllerBase
                 .OrderByDescending(a => a.Published)
                 .ToList();
 
+            // filter out duplicate articles
+            var uniqueArticles = articles
+                .GroupBy(a => a.Headline)
+                .Select(g => g.First())
+                .ToList();
+
             // return all articles
             return Ok(articles);
         }
@@ -170,7 +176,7 @@ public class EspnController: ControllerBase
     // helpers
     private async Task<List<EspnNewsItem>> GetArticlesForLeagueInternal(Guid leagueId, int days, Guid userId)
     {
-        // 1. verify league belongs to the user
+        // verify league belongs to the user
         var leagueRes = await _supabase
             .From<UserLeague>()
             .Where(l => l.Id == leagueId && l.UserID == userId)
@@ -179,7 +185,7 @@ public class EspnController: ControllerBase
         if (leagueRes == null)
             return new List<EspnNewsItem>();
 
-        // 2. get league members
+        // get league members
         var memberRes = await _supabase
             .From<LeagueOffensiveMember>()
             .Where(m => m.LeagueId == leagueId)
@@ -194,9 +200,15 @@ public class EspnController: ControllerBase
             articles.AddRange(playerArticles);
         }
 
+        var deduped = articles
+            .GroupBy(a => a.Headline) 
+            .Select(g => g.First())
+            .ToList();
+
+        // Filter & sort
         var cutoff = DateTime.UtcNow.AddDays(-days);
 
-        return articles
+        return deduped
             .Where(a => a.Published != null && a.Published >= cutoff)
             .OrderByDescending(a => a.Published)
             .ToList();
