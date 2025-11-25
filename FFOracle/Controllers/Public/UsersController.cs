@@ -66,7 +66,7 @@ public class UsersController : ControllerBase
     }
 
     // UPDATE
-    [HttpPost]
+    [HttpPut]
     public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequest req)
     {
         try
