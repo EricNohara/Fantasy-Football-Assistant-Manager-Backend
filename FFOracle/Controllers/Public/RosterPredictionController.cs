@@ -16,6 +16,7 @@ namespace FFOracle.Controllers.Public;
 public class RosterPredictionController: ControllerBase
 {
     private static readonly string[] FLEX_POSITIONS = new[] { "RB", "WR", "TE" };
+    private const int TOKENS_PER_REQUEST = 10;
 
     private readonly Client _supabase;
     private readonly ChatGPTService _chatService;
@@ -150,9 +151,9 @@ public class RosterPredictionController: ControllerBase
             var remainingTokens = await _authService.GetUserTokensLeft(userId);
 
             // return Unauthorized if no tokens left
-            if (remainingTokens <= 0)
+            if (remainingTokens <= TOKENS_PER_REQUEST)
             {
-                return Unauthorized("No tokens remaining");
+                return Unauthorized("No enough tokens remaining");
             }
 
             // get the inputted league id from query parameters
@@ -316,7 +317,7 @@ public class RosterPredictionController: ControllerBase
             }
 
             // decrement the remaining tokens for the user after successful operation ONLY
-            await _authService.DecrementUserTokens(userId);
+            await _authService.DecrementUserTokens(userId, TOKENS_PER_REQUEST);
 
             return Ok(aiRosterRecommendation);
         }

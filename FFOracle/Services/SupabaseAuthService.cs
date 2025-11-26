@@ -86,4 +86,27 @@ public class SupabaseAuthService
                 .Update(userData);
         }
     }
+
+    public async Task DecrementUserTokens(Guid? userId, int amount)
+    {
+        if (userId == null || userId == Guid.Empty)
+        {
+            return;
+        }
+
+        var userRes = await _supabase
+            .From<User>()
+            .Where(x => x.Id == userId)
+            .Get();
+
+        var userData = userRes.Model;
+        if (userData != null)
+        {
+            userData.TokensLeft = Math.Max(0, userData.TokensLeft - amount);
+            await _supabase
+                .From<User>()
+                .Where(x => x.Id == userId)
+                .Update(userData);
+        }
+    }
 }
