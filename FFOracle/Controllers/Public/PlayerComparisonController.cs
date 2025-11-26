@@ -55,12 +55,14 @@ public class PlayerComparisonController : ControllerBase
 
             ### Rules:
             - You can ONLY start one of them.
+            - Maximize projected points for the upcoming week
+            - If a player has NO game data or opponent or is injured, they should NOT be started unless the other player has the same status.
             - Consider:
               - Season stats
               - Recent weekly performance trends
               - Opponent defensive matchup
               - Betting odds (spread, implied totals, game script)
-              - Game environment (indoor/outdoor, weather if applicable)
+              - Game environment (indoor/outdoor, home/away, divisional?)
 
             ### Scoring Settings:
             {JsonSerializer.Serialize(scoringSettings)}

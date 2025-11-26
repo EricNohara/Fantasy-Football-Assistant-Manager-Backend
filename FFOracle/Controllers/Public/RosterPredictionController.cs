@@ -67,12 +67,17 @@ public class RosterPredictionController: ControllerBase
 
             ### Rules:
             - You can ONLY start **{startCount} {position}{(startCount > 1 ? "s" : "")}**.
+            - Maximize projected points for the upcoming week
+            - You MUST start exactly {startCount} players for this position unless there are fewer than {startCount} total players available.
+            - If there are fewer than {startCount} total players available, you MUST start all available players.
+            - If there are more than {startCount} total players available, you MUST choose which players to start and which to sit.
+            - If a player has NO game data or opponent or is injured, they should NOT be started unless there are insufficient healthy players to fill the position.
             - Consider:
               - Season stats
               - Recent weekly performance trends
               - Opponent defensive matchup
               - Betting odds (spread, implied totals, game script)
-              - Game environment (indoor/outdoor, weather if applicable)
+              - Game environment (indoor/outdoor, home/away, divisional?)
 
             ### Scoring Settings:
             {JsonSerializer.Serialize(scoringSettings)}
