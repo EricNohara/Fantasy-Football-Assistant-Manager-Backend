@@ -21,14 +21,9 @@ public class UpdateUserLeagueController : Controller
         _authService = authService;
     }
 
-    public class LeagueNameArg
-    {
-        public string leagueName { get; set; }
-    }
-
     //add league route
-    [HttpPut("create")]
-    public async Task<IActionResult> CreateLeague([FromBody] LeagueNameArg leagueName)
+    [HttpPost("createLeague")]
+    public async Task<IActionResult> CreateLeague([FromBody] CreateLeagueRequest req)
     {
         try
         {
@@ -40,14 +35,30 @@ public class UpdateUserLeagueController : Controller
             }
 
             //Add a new empty league with a set of blank settings
-            await _supabase
-                .Rpc("add_league", new { _user_id = userId, _league_name = leagueName.leagueName });
+            var result = await _supabase.Rpc("create_league", new
+            {
+                p_user_id = userId,
+                p_name = req.Name,
+                p_qb_count = req.QbCount,
+                p_rb_count = req.RbCount,
+                p_wr_count = req.WrCount,
+                p_te_count = req.TeCount,
+                p_flex_count = req.FlexCount,
+                p_k_count = req.KCount,
+                p_defense_count = req.DefenseCount,
+                p_bench_count = req.BenchCount,
+                p_points_per_td = req.PointsPerTd,
+                p_points_per_reception = req.PointsPerReception,
+                p_points_per_passing_yard = req.PointsPerPassingYard,
+                p_points_per_rushing_yard = req.PointsPerRushingYard,
+                p_points_per_receiving_yard = req.PointsPerReceivingYard
+            });
 
             return Ok();
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = "Error authenticating user", details = ex.Message });
+            return StatusCode(500, new { error = "Error creating new league", details = ex.Message });
         }
     }
 
