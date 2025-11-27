@@ -40,7 +40,9 @@ builder.Services.AddCors(options =>
                   "http://localhost:3000",
                   "http://localhost:5173",  // Vite default
                   "http://localhost:3001",  // Alternative React port
-                  "http://localhost:8080"   // Alternative dev server
+                  "http://localhost:8080",   // Alternative dev server
+                  "https://fforacle.vercel.app",
+                  "https://fforacle-gegydpfvezf5axc5.centralus-01.azurewebsites.net"
               )
               .AllowAnyHeader()
               .AllowAnyMethod()
