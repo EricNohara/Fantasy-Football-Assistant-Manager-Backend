@@ -2,6 +2,7 @@
 
 namespace FFOracle.DTOs.Requests;
 
+//Data to update a roster settings entry
 public class UpdateRosterSettingsRequest
 {
     [JsonPropertyName("league_id")]

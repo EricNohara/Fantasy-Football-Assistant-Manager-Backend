@@ -1,5 +1,6 @@
 ﻿namespace FFOracle.DTOs
 {
+    //Full set of team info and team stats
     public class TeamWithStats
     {
         public required DTOs.Team team {  get; set; }   //team info

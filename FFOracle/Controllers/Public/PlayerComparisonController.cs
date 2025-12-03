@@ -48,7 +48,6 @@ public class PlayerComparisonController : ControllerBase
         object player2,
         ScoringSettingsDto scoringSettings
         ){
-        //int startCount = GetStartCountForPosition(position, rosterSettings);
 
         return $@"
             You are a fantasy football manager deciding which of two players should start and which should sit.
@@ -106,6 +105,7 @@ public class PlayerComparisonController : ControllerBase
                          && FLEX_POSITIONS.Contains(player1.Player.Position)
                          && FLEX_POSITIONS.Contains(player2.Player.Position);
 
+        //if the player roles do not match, send a result telling the user that they don't match
         if (!normalMatch && !flexMatch) 
         {
             return new List<AiPositionRecommendation>
@@ -126,7 +126,7 @@ public class PlayerComparisonController : ControllerBase
                 },
             };
         }
-        else if(player1.Player.Id.Equals(player2.Player.Id)) //Also check if the same player was selected twice.
+        else if(player1.Player.Id.Equals(player2.Player.Id)) //Also check if the same player was selected twice. Notify the user if so.
         {
             return new List<AiPositionRecommendation>
              {
@@ -140,6 +140,7 @@ public class PlayerComparisonController : ControllerBase
              };
         }
 
+        //Make the query with the given players, send query to AI, return deserialized response
         var query = BuildAiPrompt(position, player1, player2, scoringSettings);
         var aiResponse = await _chatService.SendMessageAsync(query);
 
@@ -149,6 +150,7 @@ public class PlayerComparisonController : ControllerBase
         ) ?? [];
     }
 
+    //Endpoint to get AI prediction for player comparisons
     [HttpGet("{inputId1}/{inputId2}/{position}")]
     public async Task<IActionResult> GetPrediction(
         string inputId1, 
@@ -157,6 +159,7 @@ public class PlayerComparisonController : ControllerBase
         ){
         try
         {
+            //Authenticate user
             var userId = await _authService.AuthorizeUser(Request);
             if (userId == null || userId == Guid.Empty)
             {
@@ -181,7 +184,7 @@ public class PlayerComparisonController : ControllerBase
 
             //Start by determining if this is a player comparison, a team comparison,
             // or an invalid comparison (player x team or nonexistent player/team).
-            //If the comparison is valid, either call the player comparison methor or
+            //If the comparison is valid, either call the player comparison method or
             // the team comparison method based on the id type given.
             var id1TypeRes = await _supabase
                 .Rpc("is_offensePlayer_or_defenseTeam", new { input_id = inputId1 });

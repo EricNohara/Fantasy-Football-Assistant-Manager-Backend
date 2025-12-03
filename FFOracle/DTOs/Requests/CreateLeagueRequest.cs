@@ -1,5 +1,6 @@
 ﻿namespace FFOracle.DTOs.Requests;
 
+//Data for creating a new league; includes league info and league settings info
 public class CreateLeagueRequest
 {
     public string Name { get; set; }

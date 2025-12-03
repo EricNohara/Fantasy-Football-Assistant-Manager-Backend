@@ -2,6 +2,7 @@
 
 namespace FFOracle.DTOs
 {
+    //information on a single player in a league
     public class UserLeagueMember
     {
         [JsonPropertyName("picked")]

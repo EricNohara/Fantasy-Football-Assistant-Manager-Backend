@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace FFOracle.DTOs;
 
+//A player's information relevant to being in a league
 public class LeagueMember
 {
     [JsonPropertyName("league_id")]

@@ -2,6 +2,7 @@
 
 namespace FFOracle.DTOs;
 
+//Full player stats for a single player
 public class PlayerStat
 {
     [JsonPropertyName("completions")]

@@ -45,7 +45,8 @@ public class LeaguePerformanceController: ControllerBase
                 .Where(w => w.LeagueId == leagueId)
                 .Order(w => w.Week, Supabase.Postgrest.Constants.Ordering.Ascending)
                 .Get();
-
+            
+            //Filter only the relevant columns
             var leaguePerformance = allLeaguePerf.Models
                 .Select(lp => new WeeklyLeaguePerformanceDto
                 {
@@ -63,7 +64,7 @@ public class LeaguePerformanceController: ControllerBase
                 .Where(w => w.LeagueId == leagueId && w.Week == week)
                 .Order(x => x.OverallRank, Supabase.Postgrest.Constants.Ordering.Ascending)
                 .Get();
-
+            //filter relevant columns
             var playerPerformance = weekPlayerPerf.Models
                 .Select(pp => new WeeklyLeaguePlayerPerformanceDto
                 {

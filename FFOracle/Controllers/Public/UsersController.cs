@@ -19,7 +19,7 @@ public class UsersController : ControllerBase
         _authService = authService;
     }
 
-    // SIGN UP
+    //sign up route
     [HttpPost("signup")]
     public async Task<IActionResult> SignUp([FromBody] SignUpRequest req)
     {
@@ -65,7 +65,7 @@ public class UsersController : ControllerBase
         }
     }
 
-    // UPDATE
+    //update user info route
     [HttpPut]
     public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequest req)
     {
@@ -112,7 +112,7 @@ public class UsersController : ControllerBase
         }
     }
 
-    // DELETE
+    //delete user route
     [HttpDelete]
     public async Task<IActionResult> Delete()
     {

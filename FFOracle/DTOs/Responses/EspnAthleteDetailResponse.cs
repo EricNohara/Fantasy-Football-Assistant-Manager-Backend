@@ -2,6 +2,7 @@
 
 namespace FFOracle.DTOs.Responses;
 
+//Data for retrieving player info from API
 public class EspnAthleteDetailResponse
 {
     [JsonPropertyName("id")]
@@ -14,6 +15,7 @@ public class EspnAthleteDetailResponse
     public EspnPosition? Position { get; set; }
 }
 
+//Data to represent a player position as retrieved from the API
 public class EspnPosition
 {
     [JsonPropertyName("abbreviation")]

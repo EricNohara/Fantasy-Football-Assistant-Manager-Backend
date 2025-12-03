@@ -1,5 +1,6 @@
 ﻿namespace FFOracle.DTOs.Requests;
 
+//Data to create a new user
 public class SignUpRequest
 {
     public string Email { get; set; }
@@ -9,6 +10,7 @@ public class SignUpRequest
     public bool AllowEmails { get; set; }
 }
 
+//Data to update user info
 public class UpdateUserRequest
 {
     public string? Fullname { get; set; }

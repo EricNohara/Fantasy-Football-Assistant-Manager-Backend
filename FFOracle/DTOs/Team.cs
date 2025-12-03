@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace FFOracle.DTOs;
 
+//all information on a single team
 public class Team
 {
     [JsonPropertyName("id")]

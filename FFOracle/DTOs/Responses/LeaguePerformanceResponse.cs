@@ -2,12 +2,14 @@
 
 namespace FFOracle.DTOs.Responses;
 
+//Information on a league performance across multiple weeks
 public class LeaguePerformanceResponse
 {
     public List<WeeklyLeaguePerformanceDto> LeaguePerformance { get; set; }
     public List<WeeklyLeaguePlayerPerformanceDto> PlayerPerformance { get; set; }
 }
 
+//League performance data for one week
 public class WeeklyLeaguePerformanceDto
 {
     public Guid LeagueId { get; set; }
@@ -17,6 +19,7 @@ public class WeeklyLeaguePerformanceDto
     public double Accuracy { get; set; }
 }
 
+//Player performance data for one week
 public class WeeklyLeaguePlayerPerformanceDto
 {
     public Guid LeagueId { get; set; }

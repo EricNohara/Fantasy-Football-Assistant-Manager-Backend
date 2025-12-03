@@ -136,11 +136,13 @@ public class RosterPredictionController: ControllerBase
         ) ?? [];
     }
 
+    //route to get team comp prediction
     [HttpGet]
     public async Task<IActionResult> GetPrediction()
     {
         try
         {
+            //authenitcate user
             var userId = await _authService.AuthorizeUser(Request);
             if (userId == null || userId == Guid.Empty)
             {

@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace FFOracle.DTOs;
 
+//information about a single player
 public class Player
 {
     [JsonPropertyName("id")]

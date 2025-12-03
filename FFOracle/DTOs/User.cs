@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace FFOracle.DTOs;
 
+//information on a single user
 public class User
 {
     [JsonPropertyName("id")]

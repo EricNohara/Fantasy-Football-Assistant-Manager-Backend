@@ -2,6 +2,7 @@
 
 namespace FFOracle.DTOs.Requests;
 
+//Data to select a league member as picked or not
 public class UpdatePlayerPickedRequest
 {
     [JsonPropertyName("league_id")]

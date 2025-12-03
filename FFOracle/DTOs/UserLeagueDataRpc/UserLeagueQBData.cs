@@ -2,6 +2,7 @@
 
 using System.Text.Json.Serialization;
 
+//A QB league member's data
 public class UserLeagueQBData : IPlayerData
 {
     [JsonPropertyName("player")]
@@ -20,6 +21,7 @@ public class UserLeagueQBData : IPlayerData
     public GameDto Game { get; set; }
 }
 
+//QB-relevant stats
 public class QBStatsDto
 {
     [JsonPropertyName("passing_attempts")] public int? PassingAttempts { get; set; }
@@ -46,6 +48,7 @@ public class QBStatsDto
     [JsonPropertyName("fantasy_points_ppr")] public double FantasyPointsPpr { get; set; }
 }
 
+//QB-relevant weekly stats
 public class QBWeeklyStatsDto
 {
     [JsonPropertyName("week")] public int Week { get; set; }

@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace FFOracle.DTOs;
 
+//all information on a player's stats for one week
 public class WeeklyPlayerStat
 {
     [JsonPropertyName("id")]

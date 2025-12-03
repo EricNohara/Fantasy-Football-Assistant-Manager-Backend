@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace FFOracle.DTOs;
 
+//offensive stats for a single team
 public class TeamOffensiveStat
 {
     [JsonPropertyName("id")]

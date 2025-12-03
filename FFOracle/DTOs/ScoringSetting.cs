@@ -2,6 +2,7 @@
 
 namespace FFOracle.DTOs;
 
+//all information on a scoring setting entry
 public class ScoringSetting
 {
     [JsonPropertyName("id")]

@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace FFOracle.DTOs;
 
+//all information on a roster setting entry
 public class RosterSetting
 {
     [JsonPropertyName("id")]

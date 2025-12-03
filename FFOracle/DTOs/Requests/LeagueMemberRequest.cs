@@ -2,6 +2,7 @@
 
 namespace FFOracle.DTOs.Requests;
 
+//Data to identify a league member
 public class LeagueMemberRequest
 {
     [JsonProperty("league_id")]
@@ -14,6 +15,7 @@ public class LeagueMemberRequest
     public bool IsDefense { get; set; }
 }
 
+//Data to request swapping two members
 public class SwapLeagueMemberRequest
 {
     [JsonProperty("league_id")]

@@ -2,6 +2,7 @@
 
 namespace FFOracle.DTOs;
 
+//information on a single player and their fantasy points
 public class WeeklyFantasyRow
 {
     [JsonPropertyName("player_id")]

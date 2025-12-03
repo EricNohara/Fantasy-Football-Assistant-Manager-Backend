@@ -2,6 +2,7 @@
 
 using System.Text.Json.Serialization;
 
+//A flex league member's info
 public class UserLeagueFlexData : IPlayerData
 {
     [JsonPropertyName("player")]
@@ -20,6 +21,7 @@ public class UserLeagueFlexData : IPlayerData
     public GameDto Game { get; set; }
 }
 
+//Flex-relevant stats
 public class FlexStatsDto
 {
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("passing_attempts")] public int? PassingAttempts { get; set; }
@@ -46,6 +48,7 @@ public class FlexStatsDto
     [JsonPropertyName("fantasy_points_ppr")] public double FantasyPointsPpr { get; set; }
 }
 
+//Flex-relevant weekly stats
 public class FlexWeeklyStatsDto
 {
     [JsonPropertyName("week")] public int Week { get; set; }

@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace FFOracle.DTOs.Requests;
 
+//Data to update a scoring settings entry
 public class UpdateScoringSettingsRequest
 {
     [JsonPropertyName("league_id")]

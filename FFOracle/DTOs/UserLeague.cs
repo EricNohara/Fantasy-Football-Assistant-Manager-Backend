@@ -2,6 +2,7 @@
 
 namespace FFOracle.DTOs;
 
+//information on a single league
 public class UserLeague
 {
     [JsonPropertyName("id")]

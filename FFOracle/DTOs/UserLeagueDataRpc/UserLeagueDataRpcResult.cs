@@ -2,6 +2,7 @@
 
 namespace FFOracle.DTOs.UserLeagueDataRpc;
 
+//An interface for player information objects
 public interface IPlayerData
 {
     PlayerInfoDto Player { get; }
@@ -9,6 +10,7 @@ public interface IPlayerData
     GameDto Game { get; }
 }
 
+//Holds information pulled from Supabase regarding league information
 public class UserLeagueDataRpcResult
 {
     [JsonPropertyName("players")]
@@ -24,6 +26,7 @@ public class UserLeagueDataRpcResult
     public ScoringSettingsDto ScoringSettings { get; set; }
 }
 
+//A single player's stats and opponents
 public class PlayerDto
 {
     [JsonPropertyName("player")]
@@ -42,6 +45,7 @@ public class PlayerDto
     public GameDto Game { get; set; }
 }
 
+//Data regarding a member of a player's opposing team
 public class OpponentDto
 {
     [JsonPropertyName("team")]
@@ -51,12 +55,14 @@ public class OpponentDto
     public DefenseSeasonStatsDto DefensiveStats { get; set; }
 }
 
+//Data regarding a player's opposing team
 public class OpponentTeamDto
 {
     [JsonPropertyName("id")] public string Id { get; set; }
     [JsonPropertyName("name")] public string Name { get; set; }
 }
 
+//Basic data for a single player
 public class PlayerInfoDto
 {
     [JsonPropertyName("id")] public string Id { get; set; }
@@ -67,6 +73,7 @@ public class PlayerInfoDto
     [JsonPropertyName("status_description")] public string StatusDescription { get; set; }
 }
 
+//A collection of data representing one player's season stats
 public class SeasonStatsDto
 {
     [JsonPropertyName("carries")] public int? Carries { get; set; }
@@ -123,12 +130,14 @@ public class SeasonStatsDto
     }
 }
 
+//A collection of data representing a player's weekly stats over multiple weeks
 public class WeeklyStatsDto
 {
     [JsonPropertyName("week")] public int Week { get; set; }
     [JsonPropertyName("stats")] public WeeklyStatDetailDto Stats { get; set; }
 }
 
+//A collection of data representing a player's stats for one week
 public class WeeklyStatDetailDto
 {
     [JsonPropertyName("carries")] public int? Carries { get; set; }
@@ -185,6 +194,7 @@ public class WeeklyStatDetailDto
     }
 }
 
+//Data on a league's roster settings
 public class RosterSettingsDto
 {
     [JsonPropertyName("k_count")] public int KCount { get; set; }
@@ -198,6 +208,7 @@ public class RosterSettingsDto
     [JsonPropertyName("bench_count")] public int BenchCount { get; set; }
 }
 
+//Data on a league's scoring settings
 public class ScoringSettingsDto
 {
     [JsonPropertyName("points_per_td")] public double PointsPerTd { get; set; }
@@ -207,6 +218,7 @@ public class ScoringSettingsDto
     [JsonPropertyName("points_per_reception_yard")] public double PointsPerReceptionYard { get; set; }
 }
 
+//Data on a team's defense stats and opponent
 public class DefenseDto
 {
     [JsonPropertyName("team")]
@@ -222,6 +234,7 @@ public class DefenseDto
     public GameDto Game { get; set; }
 }
 
+//basic data regarding a defense team
 public class DefenseTeamInfoDto
 {
     [JsonPropertyName("id")] public string Id { get; set; }
@@ -230,6 +243,7 @@ public class DefenseTeamInfoDto
     [JsonPropertyName("division")] public string Division { get; set; }
 }
 
+//Season stats for a defense team
 public class DefenseSeasonStatsDto
 {
     [JsonPropertyName("tackles_for_loss")] public int? TacklesForLoss { get; set; }
@@ -244,6 +258,7 @@ public class DefenseSeasonStatsDto
     [JsonPropertyName("pass_defended")] public int? PassDefended { get; set; }
 }
 
+//Opponent data for a defense team
 public class DefenseOpponentDto
 {
     [JsonPropertyName("team")]
@@ -253,6 +268,7 @@ public class DefenseOpponentDto
     public TeamOffensiveStatsDto OffensiveStats { get; set; }
 }
 
+//A team's full offensive stats
 public class TeamOffensiveStatsDto
 {
     // Passing
@@ -276,6 +292,7 @@ public class TeamOffensiveStatsDto
     [JsonPropertyName("receiving_tds")] public int? ReceivingTds { get; set; }
 }
 
+//Information on a single game
 public class GameDto
 {
     [JsonPropertyName("home_team")] public string HomeTeam { get; set; }

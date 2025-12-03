@@ -2,6 +2,7 @@
 
 namespace FFOracle.DTOs.Responses;
 
+//Data to represent a portion of a list of athlete info
 public class EspnAthleteListResponse
 {
     [JsonPropertyName("count")]
@@ -20,6 +21,7 @@ public class EspnAthleteListResponse
     public List<EspnRefItem> Items { get; set; } = new();
 }
 
+//Data to represent athlete info pulled from the API
 public class EspnRefItem
 {
     [JsonPropertyName("$ref")]

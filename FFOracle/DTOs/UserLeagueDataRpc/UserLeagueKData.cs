@@ -2,6 +2,7 @@
 
 using System.Text.Json.Serialization;
 
+//A K league member's data
 public class UserLeagueKData : IPlayerData
 {
     [JsonPropertyName("player")]
@@ -20,6 +21,7 @@ public class UserLeagueKData : IPlayerData
     public GameDto Game { get; set; }
 }
 
+//K-relevant stats
 public class KStatsDto
 {
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("passing_attempts")] public int? PassingAttempts { get; set; }
@@ -77,6 +79,7 @@ public class KStatsDto
     }
 }
 
+//K-relevant weekly stats
 public class KWeeklyStatsDto
 {
     [JsonPropertyName("week")] public int Week { get; set; }

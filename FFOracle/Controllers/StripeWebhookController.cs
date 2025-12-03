@@ -26,6 +26,7 @@ public class StripeWebhookController : Controller
         _supabase = supabase;
     }
 
+    //route to handle completing payments on notification
     [HttpPost("check-payment-completion")]
     public async Task<IActionResult> HandleStripeWebhook()
     {
