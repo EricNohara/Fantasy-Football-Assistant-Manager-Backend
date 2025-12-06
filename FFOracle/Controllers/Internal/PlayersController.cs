@@ -130,7 +130,7 @@ public class PlayersController: ControllerBase
 
         try
         {
-            var response = await _supabase.Rpc<List<BasicPlayerInfoResponse>>(
+            var response = await _supabase.Rpc(
                 "get_players_basic",
                 new Dictionary<string, object>
                 {
@@ -138,7 +138,7 @@ public class PlayersController: ControllerBase
                 }
             );
 
-            return Ok(response);
+            return Ok(response.Content);
         }
         catch (Exception ex)
         {

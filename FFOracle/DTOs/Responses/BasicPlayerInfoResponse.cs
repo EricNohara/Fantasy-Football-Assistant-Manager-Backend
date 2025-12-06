@@ -14,5 +14,5 @@ public class BasicPlayerInfoResponse
     public string Position { get; set; } = default!;
 
     [JsonPropertyName("headshot_url")]
-    public string? HeadshotUrl { get; set; }
+    public string HeadshotUrl { get; set; } = default!;
 }
