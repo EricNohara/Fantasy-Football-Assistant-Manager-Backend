@@ -10,6 +10,9 @@ public class BasicPlayerInfoResponse
     [JsonPropertyName("name")]
     public string Name { get; set; } = default!;
 
+    [JsonPropertyName("position")]
+    public string Position { get; set; } = default!;
+
     [JsonPropertyName("headshot_url")]
     public string? HeadshotUrl { get; set; }
 }
