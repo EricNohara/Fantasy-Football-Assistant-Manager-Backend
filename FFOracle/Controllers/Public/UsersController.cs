@@ -13,6 +13,8 @@ public class UsersController : ControllerBase
     private readonly Client _supabase;
     private readonly SupabaseAuthService _authService;
 
+    private readonly int startingTokens = 100;  //the number of tokens a new user gets to start
+
     public UsersController(Client supabase, SupabaseAuthService authService)
     {
         _supabase = supabase;
@@ -48,7 +50,7 @@ public class UsersController : ControllerBase
                 Fullname = string.IsNullOrWhiteSpace(req.Fullname) ? null : req.Fullname,
                 PhoneNumber = string.IsNullOrWhiteSpace(req.PhoneNumber) ? null : req.PhoneNumber,
                 AllowEmails = req.AllowEmails,
-                TokensLeft = 1, // user starts with 1 free token
+                TokensLeft = startingTokens
             };
 
             await _supabase.From<Models.Supabase.User>().Insert(user);
