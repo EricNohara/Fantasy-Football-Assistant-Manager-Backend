@@ -1,4 +1,6 @@
-﻿using FFOracle.Models.Supabase;
+﻿using FFOracle.DTOs.Requests;
+using FFOracle.DTOs.Responses;
+using FFOracle.Models.Supabase;
 using FFOracle.Services;
 using FFOracle.Utils;
 using Microsoft.AspNetCore.Mvc;
@@ -114,6 +116,33 @@ public class PlayersController: ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, $"Error updating all player information: {ex.Message}");
+        }
+    }
+
+    // POST route for getting basic info from list of player IDs
+    [HttpPost("basic")]
+    public async Task<IActionResult> GetBasicPlayerInfo([FromBody] PlayerIdRequest request)
+    {
+        if (request?.Ids == null || request.Ids.Count == 0)
+        {
+            return BadRequest("Request must include a non-empty 'ids' array.");
+        }
+
+        try
+        {
+            var response = await _supabase.Rpc<List<BasicPlayerInfoResponse>>(
+                "get_players_basic",
+                new Dictionary<string, object>
+                {
+                    { "player_ids", request.Ids }
+                }
+            );
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error fetching players: {ex.Message}");
         }
     }
 }
